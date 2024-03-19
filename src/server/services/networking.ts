@@ -29,9 +29,6 @@ class Topic {
             let old = this.listenConnection;
             this.listenConnection = this.listenAsync();
             old?.Disconnect();
-
-            
-            
         })
     }
 

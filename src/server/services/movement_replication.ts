@@ -1,11 +1,16 @@
 import { OnStart, Service } from "@flamework/core";
-import { Event, EventType, NetworkService } from "./networking";
+import { Event, EventType, NetworkService, ServerRequest } from "./networking";
 import { BaseComponent } from "@flamework/components";
 import { Players } from "@rbxts/services";
 
 @Service()
 export class PlayerMovementReplicationService extends BaseComponent implements OnStart {
     onStart(): void {
+
+        NetworkService.event.Connect((request: ServerRequest) => {
+            print(request)
+        })
+
         while (true) {
             for (const player of Players.GetPlayers()) {
                 NetworkService.queueEvent(new Event({
@@ -15,5 +20,6 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
             }
             wait();
         }
+
     }
 }

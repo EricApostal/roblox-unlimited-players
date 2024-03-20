@@ -8,7 +8,7 @@ let threadCount: number = 20;
 
 let networkEvent = new Signal<(data: ServerRequest) => void>();
 
-class ServerRequest {
+export class ServerRequest {
     id: string;
     events: Array<Event>;
 

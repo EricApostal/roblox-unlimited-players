@@ -10,9 +10,9 @@ let networkEvent = new Signal<(data: ServerRequest) => void>();
 
 export class ServerRequest {
     id: number;
-    events: Array<Event>;
+    events: string;
 
-    constructor(id: number, events: Array<Event>) {
+    constructor(id: number, events: string) {
         this.id = id;
         this.events = events;
     }
@@ -36,7 +36,8 @@ class Topic {
 
     send(eventArray: Array<Event>) {
         let status = pcall(() => {
-            MessagingService.PublishAsync(this.id, new ServerRequest(serverId, eventArray));
+            let text = HttpService.JSONEncode(eventArray);
+            MessagingService.PublishAsync(this.id, new ServerRequest(serverId, text));
         });
 
         if (!status[0]) {
@@ -57,7 +58,6 @@ export class Event {
         this.d = data;
         this.eT = eventType;
     }
-
 }
 
 export enum EventType {

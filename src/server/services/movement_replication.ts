@@ -1,7 +1,7 @@
 import { OnStart, Service } from "@flamework/core";
 import { Event, EventType, NetworkService, ServerRequest } from "./networking";
 import { BaseComponent } from "@flamework/components";
-import { Players } from "@rbxts/services";
+import { Players, HttpService } from "@rbxts/services";
 
 @Service()
 export class PlayerMovementReplicationService extends BaseComponent implements OnStart {
@@ -10,9 +10,11 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
     onStart(): void {
 
         NetworkService.event.Connect((request: ServerRequest) => {
+            print(request)
+            let events = HttpService.JSONDecode(request.events) as Array<Event>;
             let playerId = request.id;
 
-            for (let event of request.events) {
+            for (let event of events) {
                 if (event.eT === EventType.PlayerPositionUpdate) {
                     let data = event.d as [{ x: number, y: number, z: number }, r: { x: number, y: number, z: number }];
 
@@ -56,6 +58,7 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                 }
                 let pos = (player!.Character!.PrimaryPart!.Position);
                 let precision = 100;
+
                 NetworkService.queueEvent(new Event([
                     { x: math.round(pos.X * precision) / precision, y: math.round(pos.Y * precision) / precision, z: math.round(pos.Z * precision) / precision },
                     { x: math.round(char.PrimaryPart!.Rotation.X * precision) / precision, y: math.round(char.PrimaryPart!.Rotation.Y * precision) / precision, z: math.round(char.PrimaryPart!.Rotation.Z * precision) / precision }

@@ -33,5 +33,6 @@
 				"compressor": "huffy"
 			}
 		]
-	}
+	},
+	"exclude": ["**/*.lua"]
 }

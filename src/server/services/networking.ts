@@ -2,6 +2,7 @@ import { BaseComponent } from "@flamework/components";
 import { OnStart, Service } from "@flamework/core";
 import { MessagingService, HttpService, Players } from "@rbxts/services";
 import Signal from "@rbxts/signal";
+import { encode, decode } from "./encoding/encode";
 
 let serverId: number = 0;
 let threadCount: number = 28;
@@ -10,9 +11,9 @@ let networkEvent = new Signal<(data: ServerRequest) => void>();
 
 export class ServerRequest {
     id: number;
-    events: string;
+    events: buffer;
 
-    constructor(id: number, events: string) {
+    constructor(id: number, events: buffer) {
         this.id = id;
         this.events = events;
     }
@@ -35,14 +36,18 @@ class Topic {
     }
 
     send(eventArray: Array<Event>) {
+        let text = HttpService.JSONEncode(eventArray);
+        let encoded = encode(buffer.fromstring(text));
+
         let status = pcall(() => {
-            let text = HttpService.JSONEncode(eventArray);
-            MessagingService.PublishAsync(this.id, new ServerRequest(serverId, text));
+            MessagingService.PublishAsync(this.id, new ServerRequest(serverId, encoded));
         });
 
         if (!status[0]) {
             print(`Failed to send data!`)
             warn(status[1])
+            print("Data: ")
+            print(text)
         }
     }
 }
@@ -84,7 +89,6 @@ export namespace NetworkService {
         while (true) {
             for (let topic of topics) {
                 topic.send(eventQueue);
-                print(eventQueue)
                 eventQueue.clear();
                 wait(0.5);
             }

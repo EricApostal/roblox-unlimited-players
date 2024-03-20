@@ -28,8 +28,8 @@ class Topic {
     listen() {
         MessagingService.SubscribeAsync(this.id, (_d: unknown) => {
             let data = (_d as Map<string, unknown>).get("Data") as ServerRequest;
-            print(`Received data: ${data} from ${this.id}`)
-            print(data)
+            // print(`Received data: ${data} from ${this.id}`)
+            // print(data)
 
             // This seems backwards, but we don't need to differentiate per topic.
             networkEvent.Fire(data);
@@ -49,21 +49,17 @@ class Topic {
 }
 
 export class Event {
-    private d: unknown;
-    private eT: EventType;
+    // Data
+    d: unknown;
+
+    // Event Type
+    eT: EventType;
 
     constructor(data: unknown, eventType: EventType) {
         this.d = data;
         this.eT = eventType;
     }
 
-    getData() {
-        return this.d;
-    }
-
-    getEventType() {
-        return this.eT;
-    }
 }
 
 export enum EventType {

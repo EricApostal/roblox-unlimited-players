@@ -3,7 +3,7 @@ import { Event, EventType, NetworkService, ServerRequest } from "./networking";
 import { BaseComponent } from "@flamework/components";
 import { Players, HttpService } from "@rbxts/services";
 import { encode, decode } from "./encoding/encode";
-print("ree")
+
 @Service()
 export class PlayerMovementReplicationService extends BaseComponent implements OnStart {
     replicationParts: Map<number, BasePart> = new Map();
@@ -41,11 +41,8 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                     });
                     tween.Play();
 
-                    // playerReplicated.Position = new Vector3(position.x, position.y, position.z);
-                    // playerReplicated.Rotation = new Vector3(rotation.x, rotation.y, rotation.z);
-
                 }
-                wait(0);
+                wait();
             }
         })
 
@@ -64,7 +61,7 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                     { x: math.round(char.PrimaryPart!.Rotation.X * precision) / precision, y: math.round(char.PrimaryPart!.Rotation.Y * precision) / precision, z: math.round(char.PrimaryPart!.Rotation.Z * precision) / precision }
                 ], EventType.PlayerPositionUpdate));
             }
-            wait(0);
+            wait();
         }
 
     }

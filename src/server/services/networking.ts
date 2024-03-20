@@ -84,6 +84,7 @@ export namespace NetworkService {
         while (true) {
             for (let topic of topics) {
                 topic.send(eventQueue);
+                print(eventQueue)
                 eventQueue.clear();
                 wait(0.5);
             }

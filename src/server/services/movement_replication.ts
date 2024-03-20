@@ -11,12 +11,15 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
 
         NetworkService.event.Connect((request: ServerRequest) => {
             let playerId = request.id;
-            print(request)
+
             for (let event of request.events) {
                 if (event.eT === EventType.PlayerPositionUpdate) {
-                    let data = event.d as { pos: { x: number, y: number, z: number } };
+                    let data = event.d as [{ x: number, y: number, z: number }, r: { x: number, y: number, z: number }];
 
                     let playerReplicated = this.replicationParts.get(playerId);
+
+                    let position = data[0];
+                    let rotation = data[1];
 
                     if (!playerReplicated) {
                         playerReplicated = new Instance("Part");
@@ -29,9 +32,18 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                         this.replicationParts.set(playerId, playerReplicated);
                     }
 
-                    playerReplicated.Position = new Vector3(data.pos.x, data.pos.y, data.pos.z);
+                    // tween position / rotation
+                    let tween = game.GetService("TweenService").Create(playerReplicated, new TweenInfo(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), {
+                        Position: new Vector3(position.x, position.y, position.z),
+                        Rotation: new Vector3(0, rotation.y, 0)
+                    });
+                    tween.Play();
+
+                    // playerReplicated.Position = new Vector3(position.x, position.y, position.z);
+                    // playerReplicated.Rotation = new Vector3(rotation.x, rotation.y, rotation.z);
+
                 }
-                wait();
+                wait(0.05);
             }
         })
 
@@ -43,11 +55,13 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                     wait();
                 }
                 let pos = (player!.Character!.PrimaryPart!.Position);
-                NetworkService.queueEvent(new Event({
-                    pos: { x: math.round(pos.X * 10) / 10, y: math.round(pos.Y * 10) / 10, z: math.round(pos.Z * 10) / 10 }
-                }, EventType.PlayerPositionUpdate));
+                let precision = 100;
+                NetworkService.queueEvent(new Event([
+                    { x: math.round(pos.X * precision) / precision, y: math.round(pos.Y * precision) / precision, z: math.round(pos.Z * precision) / precision },
+                    { x: math.round(char.PrimaryPart!.Rotation.X * precision) / precision, y: math.round(char.PrimaryPart!.Rotation.Y * precision) / precision, z: math.round(char.PrimaryPart!.Rotation.Z * precision) / precision }
+                ], EventType.PlayerPositionUpdate));
             }
-            wait();
+            wait(0.05);
         }
 
     }

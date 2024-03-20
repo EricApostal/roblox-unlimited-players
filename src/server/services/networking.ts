@@ -3,16 +3,16 @@ import { OnStart, Service } from "@flamework/core";
 import { MessagingService, HttpService, Players } from "@rbxts/services";
 import Signal from "@rbxts/signal";
 
-let serverId = HttpService.GenerateGUID(false)
-let threadCount: number = 20;
+let serverId: number = 0;
+let threadCount: number = 28;
 
 let networkEvent = new Signal<(data: ServerRequest) => void>();
 
 export class ServerRequest {
-    id: string;
+    id: number;
     events: Array<Event>;
 
-    constructor(id: string, events: Array<Event>) {
+    constructor(id: number, events: Array<Event>) {
         this.id = id;
         this.events = events;
     }
@@ -28,10 +28,8 @@ class Topic {
     listen() {
         MessagingService.SubscribeAsync(this.id, (_d: unknown) => {
             let data = (_d as Map<string, unknown>).get("Data") as ServerRequest;
-            // print(`Received data: ${data} from ${this.id}`)
-            // print(data)
+            if (((data.id) === serverId) && !game.GetService("RunService").IsStudio()) return;
 
-            // This seems backwards, but we don't need to differentiate per topic.
             networkEvent.Fire(data);
         })
     }
@@ -71,19 +69,25 @@ export namespace NetworkService {
     let eventQueue = new Array<Event>()
     export let event = networkEvent;
 
-    for (let i = 0; i < threadCount; i++) {
-        let topic = new Topic(string.format("topic-%d", i))
-        topics.push(topic)
-        topic.listen()
-    }
+    Players.PlayerAdded.Connect((player) => {
+        print("Player added so running on 28 topics")
+        serverId = player.UserId;
+
+        for (let i = 0; i < threadCount; i++) {
+            let topic = new Topic(string.format("topic-%d", i))
+            topics.push(topic)
+            topic.listen()
+        }
+    });
 
     spawn(() => {
         while (true) {
             for (let topic of topics) {
                 topic.send(eventQueue);
                 eventQueue.clear();
-                wait(0.4);
+                wait(0.5);
             }
+            wait()
         }
     });
 

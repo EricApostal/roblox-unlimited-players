@@ -1,9 +1,12 @@
 import { BaseComponent } from "@flamework/components";
 import { OnStart, Service } from "@flamework/core";
 import { MessagingService, HttpService, Players } from "@rbxts/services";
+import Signal from "@rbxts/signal";
 
 let serverId = HttpService.GenerateGUID(false)
 let threadCount: number = 20;
+
+let networkEvent = new Signal<(data: ServerRequest) => void>();
 
 class ServerRequest {
     id: string;
@@ -19,15 +22,17 @@ class Topic {
     id: string;
 
     constructor(id: string) {
-        this.id = id
+        this.id = id;
     }
 
     listen() {
         MessagingService.SubscribeAsync(this.id, (_d: unknown) => {
             let data = (_d as Map<string, unknown>).get("Data") as ServerRequest;
-
             print(`Received data: ${data} from ${this.id}`)
             print(data)
+
+            // This seems backwards, but we don't need to differentiate per topic.
+            networkEvent.Fire(data);
         })
     }
 
@@ -68,6 +73,7 @@ export enum EventType {
 export namespace NetworkService {
     let topics = new Array<Topic>()
     let eventQueue = new Array<Event>()
+    export let event = networkEvent;
 
     for (let i = 0; i < threadCount; i++) {
         let topic = new Topic(string.format("topic-%d", i))

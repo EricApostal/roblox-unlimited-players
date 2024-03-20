@@ -4,7 +4,7 @@ import { BaseComponent } from "@flamework/components";
 import { Players } from "@rbxts/services";
 
 @Service()
-export class TestService extends BaseComponent implements OnStart {
+export class PlayerMovementReplicationService extends BaseComponent implements OnStart {
     onStart(): void {
         while (true) {
             for (const player of Players.GetPlayers()) {

@@ -5,6 +5,16 @@ import { MessagingService, HttpService, Players } from "@rbxts/services";
 let serverId = HttpService.GenerateGUID(false)
 let threadCount: number = 20;
 
+class ServerRequest {
+    id: string;
+    events: Array<Event>;
+
+    constructor(id: string, events: Array<Event>) {
+        this.id = id;
+        this.events = events;
+    }
+}
+
 class Topic {
     id: string;
 
@@ -14,17 +24,16 @@ class Topic {
 
     listen() {
         MessagingService.SubscribeAsync(this.id, (_d: unknown) => {
-            let data = (_d as Map<string, unknown>).get("Data") as Array<Event>;
+            let data = (_d as Map<string, unknown>).get("Data") as ServerRequest;
 
             print(`Received data: ${data} from ${this.id}`)
             print(data)
         })
     }
 
-    send(eventArray: unknown) {
-        print(typeOf(eventArray))
+    send(eventArray: Array<Event>) {
         let status = pcall(() => {
-            MessagingService.PublishAsync(this.id, eventArray);
+            MessagingService.PublishAsync(this.id, new ServerRequest(serverId, eventArray));
         });
 
         if (!status[0]) {
@@ -35,20 +44,25 @@ class Topic {
 }
 
 export class Event {
-    data: unknown;
+    private d: unknown;
+    private eT: EventType;
 
-    constructor(data: unknown) {
-        this.data = data;
+    constructor(data: unknown, eventType: EventType) {
+        this.d = data;
+        this.eT = eventType;
+    }
+
+    getData() {
+        return this.d;
+    }
+
+    getEventType() {
+        return this.eT;
     }
 }
 
-export class PlayerPositionUpdateEvent extends Event {
-    position: Vector3;
-
-    constructor(position: Vector3) {
-        super(position);
-        this.position = position;
-    }
+export enum EventType {
+    PlayerPositionUpdate,
 }
 
 export namespace NetworkService {
@@ -70,7 +84,6 @@ export namespace NetworkService {
             }
         }
     });
-
 
     export function queueEvent(event: Event) {
         eventQueue.push(event);

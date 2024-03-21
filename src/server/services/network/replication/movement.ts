@@ -35,12 +35,12 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                 let data = event.d as [{ x: number, y: number, z: number }, r: { x: number, y: number, z: number }];
 
                 let playerReplicated = replicationRigs.get(playerId as number);
-
                 let position = data[0];
                 let orientation = data[1];
 
                 if (!playerReplicated) {
                     playerReplicated = ReplicatedStorage.WaitForChild("assets").WaitForChild("Rig").Clone() as Model;
+                    (playerReplicated.WaitForChild("Humanoid") as Humanoid).DisplayName = Players.GetNameFromUserIdAsync(playerId);
                     playerReplicated.Parent = game.Workspace;
 
                     replicationRigs.set(playerId, playerReplicated);
@@ -58,8 +58,6 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
 
                 let tween = game.GetService("TweenService").Create(playerReplicated!.PrimaryPart as BasePart, new TweenInfo(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), goal as {});
                 tween.Play();
-
-
             }
             wait();
         }

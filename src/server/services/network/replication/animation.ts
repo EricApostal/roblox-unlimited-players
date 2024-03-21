@@ -60,6 +60,7 @@ export class PlayerAnimationReplicationService extends BaseComponent implements 
 
                     if (data === AnimationType.Idle) {
                         this.currentAnimationTrack?.Stop();
+                        this.currentAnimationTrack?.Destroy();
                     }
                 }
             }

@@ -56,10 +56,10 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                     goal.set("Orientation", new Vector3(0, orientation.y, 0));
                 }
 
-                let tween = game.GetService("TweenService").Create(playerReplicated!.PrimaryPart as BasePart, new TweenInfo(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), goal as {});
+                let tween = game.GetService("TweenService").Create(playerReplicated!.PrimaryPart as BasePart, new TweenInfo(0.2, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), goal as {});
                 tween.Play();
+                wait();
             }
-            wait();
         }
 
     }

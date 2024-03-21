@@ -11,9 +11,9 @@ let networkEvent = new Signal<(data: ServerRequest) => void>();
 
 export class ServerRequest {
     id: number;
-    events: buffer;
+    events: string | buffer | Array<Event>;
 
-    constructor(id: number, events: buffer) {
+    constructor(id: number, events: buffer | string) {
         this.id = id;
         this.events = events;
     }
@@ -31,6 +31,9 @@ class Topic {
             let data = (_d as Map<string, unknown>).get("Data") as ServerRequest;
             if (((data.id) === serverId) && !game.GetService("RunService").IsStudio()) return;
 
+            // clean up data
+            data.events = buffer.tostring(decode(data.events as buffer));
+
             networkEvent.Fire(data);
         })
     }
@@ -47,7 +50,7 @@ class Topic {
             print(`Failed to send data!`)
             warn(status[1])
             print("Data: ")
-            print(text)
+            print(eventArray)
         }
     }
 }
@@ -67,6 +70,7 @@ export class Event {
 
 export enum EventType {
     PlayerPositionUpdate,
+    PlayerAnimationUpdate,
 }
 
 export namespace NetworkService {

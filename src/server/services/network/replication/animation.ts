@@ -51,9 +51,14 @@ export class PlayerAnimationReplicationService extends BaseComponent implements 
                         this.currentAnimationTrack.Play();
                     }
 
+                    if (data === AnimationType.Jumping) {
+                        let animation = new Instance("Animation") as Animation;
+                        animation.AnimationId = "rbxassetid://507765000";
+                        this.currentAnimationTrack = (humanoid.WaitForChild("Animator") as Animator).LoadAnimation(animation);
+                        this.currentAnimationTrack.Play();
+                    }
+
                     if (data === AnimationType.Idle) {
-                        print("stopped!")
-                        // stop playing animations
                         this.currentAnimationTrack?.Stop();
                     }
                 }

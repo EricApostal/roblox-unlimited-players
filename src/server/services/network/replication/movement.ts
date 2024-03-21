@@ -7,8 +7,6 @@ import { replicationRigs } from "./state";
 
 @Service()
 export class PlayerMovementReplicationService extends BaseComponent implements OnServerRequestRecieved, OnStart {
-
-
     onStart() {
         while (true) {
             for (const player of Players.GetPlayers()) {
@@ -48,12 +46,19 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                     replicationRigs.set(playerId, playerReplicated);
                 }
 
-                // tween position / rotation
-                let tween = game.GetService("TweenService").Create(playerReplicated!.PrimaryPart as BasePart, new TweenInfo(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), {
-                    Position: new Vector3(position.x, position.y, position.z),
-                    Orientation: new Vector3(0, orientation.y, 0)
-                });
+                let goal = new Map<string, unknown>();
+
+                if ((playerReplicated.PrimaryPart!.Position.sub(new Vector3(position.x, position.y, position.z))).Magnitude >= 0.5) {
+                    goal.set("Position", new Vector3(position.x, position.y, position.z));
+                }
+
+                if ((playerReplicated.PrimaryPart!.Orientation.sub(new Vector3(0, orientation.y, 0))).Magnitude >= 0.5) {
+                    goal.set("Orientation", new Vector3(0, orientation.y, 0));
+                }
+
+                let tween = game.GetService("TweenService").Create(playerReplicated!.PrimaryPart as BasePart, new TweenInfo(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), goal as {});
                 tween.Play();
+
 
             }
             wait();

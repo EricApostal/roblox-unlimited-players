@@ -141,9 +141,10 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                 wait();
             }
 
+
             if (event.eT === EventType.PlayerChatSend) {
-                print(`Got chat message event${event.d}`)
                 Events.SendChatMessage(Players.GetPlayers()[0]!, { playerId: playerId, message: event.d as string });
+                Chat.Chat((replicationRigs.get(playerId) as Model).FindFirstChild("Head")! as BasePart, event.d as string);
             }
         }
 

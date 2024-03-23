@@ -79,7 +79,7 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                 let animationType = data[2] as AnimationType;
 
                 if (!playerReplicated) {
-                    playerReplicated = ReplicatedStorage.WaitForChild("assets").WaitForChild("Rig").Clone() as Model;
+                    playerReplicated = Players.CreateHumanoidModelFromUserId(playerId);
                     (playerReplicated.WaitForChild("Humanoid") as Humanoid).DisplayName = Players.GetNameFromUserIdAsync(playerId);
                     playerReplicated.Parent = game.Workspace;
 

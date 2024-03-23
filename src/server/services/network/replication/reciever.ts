@@ -11,6 +11,8 @@ enum AnimationType {
     Idle
 }
 
+
+
 @Service()
 export class PlayerMovementReplicationService extends BaseComponent implements OnServerRequestRecieved, OnStart {
     lastAnimationType: AnimationType | undefined;
@@ -39,8 +41,6 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                 if (isJumping) {
                     animationType = AnimationType.Jumping;
                 }
-
-
 
                 NetworkService.queueEvent(new Event([
                     { x: math.round(pos.X * precision) / precision, y: math.round(pos.Y * precision) / precision, z: math.round(pos.Z * precision) / precision },
@@ -85,6 +85,7 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                 // do animation
                 if ((this.lastAnimationType !== animationType) && !this.isJumping) {
                     if (animationType === AnimationType.Running) {
+                        print("playing run!")
                         this.lastAnimationType = AnimationType.Running;
                         let animation = new Instance("Animation") as Animation;
                         animation.AnimationId = "rbxassetid://507767714";

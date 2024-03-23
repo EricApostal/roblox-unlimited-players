@@ -11,17 +11,23 @@ enum AnimationType {
     Idle
 }
 
-
-
-@Service()
-export class PlayerMovementReplicationService extends BaseComponent implements OnServerRequestRecieved, OnStart {
+class PlayerState {
     lastAnimationType: AnimationType | undefined;
     currentAnimationTrack: AnimationTrack | undefined;
     isJumping: boolean = false;
+}
+
+@Service()
+export class PlayerMovementReplicationService extends BaseComponent implements OnServerRequestRecieved, OnStart {
+
+    playerStates: Map<number, PlayerState> | undefined
 
     onStart() {
+        this.playerStates = new Map<number, PlayerState>();
         while (true) {
             for (const player of Players.GetPlayers()) {
+                let state = this.getPlayerState(player.UserId);
+
                 let char = player.Character;
                 while (!char) {
                     char = player.Character;
@@ -52,6 +58,15 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
         }
     }
 
+    getPlayerState(playerId: number): PlayerState {
+        let state = this.playerStates!.get(playerId);
+        if (!state) {
+            state = new PlayerState();
+            this.playerStates!.set(playerId, state);
+        }
+        return state;
+    }
+
     onServerRequestRecieved(request: ServerRequest): void {
         let playerId = request.id;
 
@@ -72,6 +87,8 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                     replicationRigs.set(playerId, playerReplicated);
                 }
 
+                let state = this.getPlayerState(playerId);
+
                 let goal = new Map<string, unknown>();
 
                 if ((playerReplicated.PrimaryPart!.Position.sub(new Vector3(position.x, position.y, position.z))).Magnitude >= 0.5) {
@@ -83,36 +100,35 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                 }
 
                 // do animation
-                if ((this.lastAnimationType !== animationType) && !this.isJumping) {
+                if ((state.lastAnimationType !== animationType) && !state.isJumping) {
                     if (animationType === AnimationType.Running) {
                         print("playing run!")
-                        this.lastAnimationType = AnimationType.Running;
+                        state.lastAnimationType = AnimationType.Running;
                         let animation = new Instance("Animation") as Animation;
                         animation.AnimationId = "rbxassetid://507767714";
-                        this.currentAnimationTrack = (playerReplicated.WaitForChild("Humanoid").WaitForChild("Animator") as Animator).LoadAnimation(animation);
-                        this.currentAnimationTrack.Play();
+                        state.currentAnimationTrack = (playerReplicated.WaitForChild("Humanoid").WaitForChild("Animator") as Animator).LoadAnimation(animation);
+                        state.currentAnimationTrack.Play();
                     }
 
-
                     if (animationType === AnimationType.Idle) {
-                        this.lastAnimationType = AnimationType.Idle;
-                        if (this.currentAnimationTrack) {
-                            this.currentAnimationTrack.Stop();
-                            this.currentAnimationTrack.Destroy();
+                        state.lastAnimationType = AnimationType.Idle;
+                        if (state.currentAnimationTrack) {
+                            state.currentAnimationTrack.Stop();
+                            state.currentAnimationTrack.Destroy();
                         }
                     }
 
                     if (animationType === AnimationType.Jumping) {
                         print("playing jump!")
-                        this.isJumping = true;
-                        this.lastAnimationType = AnimationType.Jumping;
+                        state.isJumping = true;
+                        state.lastAnimationType = AnimationType.Jumping;
                         let animation = new Instance("Animation") as Animation;
                         animation.AnimationId = "rbxassetid://507765000";
-                        this.currentAnimationTrack = (playerReplicated.WaitForChild("Humanoid").WaitForChild("Animator") as Animator).LoadAnimation(animation);
-                        this.currentAnimationTrack.Play();
+                        state.currentAnimationTrack = (playerReplicated.WaitForChild("Humanoid").WaitForChild("Animator") as Animator).LoadAnimation(animation);
+                        state.currentAnimationTrack.Play();
                         let _link: RBXScriptConnection | undefined;
-                        _link = this.currentAnimationTrack.Stopped.Connect(() => {
-                            this.isJumping = false;
+                        _link = state.currentAnimationTrack.Stopped.Connect(() => {
+                            state.isJumping = false;
                             if (_link) _link.Disconnect();
                         })
                     }

@@ -70,7 +70,8 @@ export class Event {
 
 export enum EventType {
     PlayerPositionUpdate,
-    PlayerChatSend
+    PlayerChatSend,
+    PlayerLeavingUpdate
 }
 
 export namespace NetworkService {

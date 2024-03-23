@@ -63,6 +63,11 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
         player.Chatted.Connect((message) => {
             NetworkService.queueEvent(new Event(message, EventType.PlayerChatSend));
         })
+
+        game.BindToClose(() => {
+            NetworkService.queueEvent(new Event(undefined, EventType.PlayerLeavingUpdate));
+            wait(1);
+        });
     }
 
     getPlayerState(playerId: number): PlayerState {
@@ -141,10 +146,17 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                 wait();
             }
 
-
             if (event.eT === EventType.PlayerChatSend) {
                 Events.SendChatMessage(Players.GetPlayers()[0]!, { playerId: playerId, message: event.d as string });
                 Chat.Chat((replicationRigs.get(playerId) as Model).FindFirstChild("Head")! as BasePart, event.d as string);
+            }
+
+            if (event.eT === EventType.PlayerLeavingUpdate) {
+                let playerReplicated = replicationRigs.get(playerId as number);
+                if (playerReplicated) {
+                    playerReplicated.Destroy();
+                    replicationRigs.delete(playerId);
+                }
             }
         }
 

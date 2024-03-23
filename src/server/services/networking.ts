@@ -70,7 +70,6 @@ export class Event {
 
 export enum EventType {
     PlayerPositionUpdate,
-    PlayerAnimationUpdate,
 }
 
 export namespace NetworkService {
@@ -94,7 +93,7 @@ export namespace NetworkService {
             for (let topic of topics) {
                 topic.send(eventQueue);
                 eventQueue.clear();
-                wait(0.6);
+                wait(0.5);
             }
             wait()
         }

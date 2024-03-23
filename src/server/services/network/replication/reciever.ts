@@ -26,13 +26,12 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
         this.playerStates = new Map<number, PlayerState>();
         while (true) {
             for (const player of Players.GetPlayers()) {
-                let state = this.getPlayerState(player.UserId);
-
                 let char = player.Character;
                 while (!char) {
                     char = player.Character;
                     wait();
                 }
+
                 let pos = (player!.Character!.PrimaryPart!.Position);
                 let precision = 100;
 
@@ -100,9 +99,9 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                 }
 
                 // do animation
+                print(animationType);
                 if ((state.lastAnimationType !== animationType) && !state.isJumping) {
                     if (animationType === AnimationType.Running) {
-                        print("playing run!")
                         state.lastAnimationType = AnimationType.Running;
                         let animation = new Instance("Animation") as Animation;
                         animation.AnimationId = "rbxassetid://507767714";
@@ -119,22 +118,18 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                     }
 
                     if (animationType === AnimationType.Jumping) {
-                        print("playing jump!")
                         state.isJumping = true;
                         state.lastAnimationType = AnimationType.Jumping;
                         let animation = new Instance("Animation") as Animation;
                         animation.AnimationId = "rbxassetid://507765000";
                         state.currentAnimationTrack = (playerReplicated.WaitForChild("Humanoid").WaitForChild("Animator") as Animator).LoadAnimation(animation);
                         state.currentAnimationTrack.Play();
-                        let _link: RBXScriptConnection | undefined;
-                        _link = state.currentAnimationTrack.Stopped.Connect(() => {
-                            state.isJumping = false;
-                            if (_link) _link.Disconnect();
-                        })
+                        wait(0.25)
+                        state.isJumping = false;
                     }
                 }
 
-                let tween = game.GetService("TweenService").Create(playerReplicated!.PrimaryPart as BasePart, new TweenInfo(0.2, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), goal as {});
+                let tween = game.GetService("TweenService").Create(playerReplicated!.PrimaryPart as BasePart, new TweenInfo(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), goal as {});
                 tween.Play();
                 wait();
             }

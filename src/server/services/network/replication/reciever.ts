@@ -1,9 +1,10 @@
 import { OnStart, Service } from "@flamework/core";
 import { Event, EventType, NetworkService, ServerRequest } from "../../networking";
 import { BaseComponent } from "@flamework/components";
-import { Players, HttpService, ReplicatedStorage } from "@rbxts/services";
-import { OnServerRequestRecieved } from "../bindings";
+import { Players, Chat, HttpService, ReplicatedStorage, } from "@rbxts/services";
+import { OnPlayerJoined, OnServerRequestRecieved } from "../bindings";
 import { replicationRigs } from "./state";
+import { Events } from "server/network";
 
 enum AnimationType {
     Running,
@@ -18,12 +19,13 @@ class PlayerState {
 }
 
 @Service()
-export class PlayerMovementReplicationService extends BaseComponent implements OnServerRequestRecieved, OnStart {
+export class PlayerMovementReplicationService extends BaseComponent implements OnServerRequestRecieved, OnStart, OnPlayerJoined {
 
     playerStates: Map<number, PlayerState> | undefined
 
     onStart() {
         this.playerStates = new Map<number, PlayerState>();
+
         while (true) {
             for (const player of Players.GetPlayers()) {
                 let char = player.Character;
@@ -55,6 +57,12 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
             }
             wait();
         }
+    }
+
+    onPlayerJoined(player: Player): void {
+        player.Chatted.Connect((message) => {
+            NetworkService.queueEvent(new Event(message, EventType.PlayerChatSend));
+        })
     }
 
     getPlayerState(playerId: number): PlayerState {
@@ -99,7 +107,6 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                 }
 
                 // do animation
-                print(animationType);
                 if ((state.lastAnimationType !== animationType) && !state.isJumping) {
                     if (animationType === AnimationType.Running) {
                         state.lastAnimationType = AnimationType.Running;
@@ -132,6 +139,11 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                 let tween = game.GetService("TweenService").Create(playerReplicated!.PrimaryPart as BasePart, new TweenInfo(0.1, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), goal as {});
                 tween.Play();
                 wait();
+            }
+
+            if (event.eT === EventType.PlayerChatSend) {
+                print(`Got chat message event${event.d}`)
+                Events.SendChatMessage(Players.GetPlayers()[0]!, { playerId: playerId, message: event.d as string });
             }
         }
 

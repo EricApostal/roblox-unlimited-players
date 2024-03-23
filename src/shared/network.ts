@@ -1,12 +1,14 @@
 import { Networking } from "@flamework/networking";
 
-interface ClientToServerEvents {}
+interface ClientToServerEvents { }
 
-interface ServerToClientEvents {}
+interface ServerToClientEvents {
+    SendChatMessage: (message: { playerId: number, message: string }) => void;
+}
 
-interface ClientToServerFunctions {}
+interface ClientToServerFunctions { }
 
-interface ServerToClientFunctions {}
+interface ServerToClientFunctions { }
 
 export const GlobalEvents = Networking.createEvent<ClientToServerEvents, ServerToClientEvents>();
 export const GlobalFunctions = Networking.createFunction<ClientToServerFunctions, ServerToClientFunctions>();

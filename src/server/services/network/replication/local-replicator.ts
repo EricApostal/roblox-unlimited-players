@@ -104,15 +104,23 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
         return { x: math.round(velocity.X * this.numberPrecision) / this.numberPrecision, y: math.round(velocity.Y * this.numberPrecision) / this.numberPrecision, z: math.round(velocity.Z * this.numberPrecision) / this.numberPrecision };
     }
 
+    private getOrientation() {
+        let orientation = Players.GetPlayers()[0]!.Character!.PrimaryPart!.Orientation;
+        return { x: math.round(orientation.X * this.numberPrecision) / this.numberPrecision, y: math.round(orientation.Y * this.numberPrecision) / this.numberPrecision, z: math.round(orientation.Z * this.numberPrecision) / this.numberPrecision };
+    }
+
     private periodicUpdateThread() {
         while (true) {
             while (Players.GetPlayers().size() === 0) wait();
             while (!Players.GetPlayers()[0]!.Character) wait();
             let pos = Players.GetPlayers()[0]!.Character!.PrimaryPart!.Position;
             let vel = this.getVelocity();
+            let orientation = this.getOrientation();
+
             NetworkService.queueEvent(new Event({
                 p: { x: pos.X, y: pos.Y, z: pos.Z },
                 v: { x: vel.x, y: vel.y, z: vel.z },
+                o: { x: orientation.x, y: orientation.y, z: orientation.z }
             }, EventType.PlayerPositionUpdate));
             wait(0.5);
         }

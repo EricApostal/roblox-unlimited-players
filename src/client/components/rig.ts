@@ -171,6 +171,8 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
             let velocity = this.velocity;
             let timeDelta = 0.1;
 
+            while (!(this.instance as Model).PrimaryPart) wait();
+
             // Calculate the goal position using velocity
             let goalPosition = (this.instance as Model).PrimaryPart!.Position.add(velocity.mul(timeDelta * 2.5));
 

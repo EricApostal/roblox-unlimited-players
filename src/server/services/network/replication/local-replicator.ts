@@ -7,9 +7,9 @@ import { OnLocalPlayerJoined, OnNetworkPlayerJoined, OnServerRequestRecieved } f
 PhysicsService.RegisterCollisionGroup("localplayer")
 PhysicsService.RegisterCollisionGroup("replicatedplayer")
 
-//if (RunService.IsStudio()) {
-PhysicsService.CollisionGroupSetCollidable("localplayer", "replicatedplayer", false)
-//}
+if (RunService.IsStudio()) {
+    PhysicsService.CollisionGroupSetCollidable("localplayer", "replicatedplayer", false)
+}
 
 enum AnimationType {
     Running,

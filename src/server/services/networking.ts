@@ -29,7 +29,7 @@ class Topic {
     listen() {
         MessagingService.SubscribeAsync(this.id, (_d: unknown) => {
             let data = (_d as Map<string, unknown>).get("Data") as ServerRequest;
-            // if (((data.id) === serverId) && !game.GetService("RunService").IsStudio()) return;
+            if (((data.id) === serverId) && !game.GetService("RunService").IsStudio()) return;
 
             // clean up data
             data.events = buffer.tostring(decode(data.events as buffer));

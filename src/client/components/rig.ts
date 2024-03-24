@@ -41,7 +41,7 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
         });
 
         RunService.RenderStepped.Connect(() => {
-            (this.instance as Model).PrimaryPart!.Orientation = new Vector3(0, 0, 0);
+            // (this.instance as Model).PrimaryPart!.Orientation = new Vector3(0, 0, 0);
         })
 
         task.spawn(() => this.replicationTickThead());
@@ -67,12 +67,17 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
                 if (position) {
                     let newPos = new Vector3(position.X, position.Y, position.Z);
                     if (newPos.sub(playerReplicated.PrimaryPart!.Position).Magnitude > 3) {
-                        let goal = {
-                            Position: newPos,
-                            // Orientation: new Vector3(0, 0, 0)
+                        let newCframe = new CFrame(newPos);
+                        if (orientation) {
+                            newCframe = newCframe.mul(CFrame.Angles(0, orientation.y, 0));
                         }
+
+                        let goal = {
+                            CFrame: newCframe
+                        }
+                        // playerReplicated.PrimaryPart!.CFrame = new CFrame(newPos);
                         if (!this.moveToLocked) {
-                            let tween = TweenService.Create(playerReplicated.PrimaryPart!, new TweenInfo(0.5, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), goal);
+                            let tween = TweenService.Create(playerReplicated.PrimaryPart!, new TweenInfo(0.2, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), goal);
                             tween.Play();
                             this.moveToLocked = true;
                             this.doAnimation(AnimationType.Running);

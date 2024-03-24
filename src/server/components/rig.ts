@@ -22,7 +22,7 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
     lastVelocityUpdate: Vector3 = new Vector3(0, 0, 0);
     lastOrientationUpdate: Vector3 = new Vector3(0, 0, 0);
     position: Vector3 = new Vector3(0, 0, 0);
-    shouldUpdatePosition: boolean = false;
+    moveToLocked: boolean = false;
 
     onStart(): void {
         this.playerId = this.instance.GetAttribute("playerId") as number;
@@ -31,8 +31,8 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
             this.onServerRequestRecieved(request);
         });
 
-        task.spawn(() => this.replicationTickThead(this.playerId!));
-        task.spawn(() => this.periodicUpdateThread(this.playerId!));
+        task.spawn(() => this.replicationTickThead());
+        task.spawn(() => this.periodicUpdateThread());
     }
 
     private onServerRequestRecieved(request: ServerRequest) {
@@ -56,7 +56,7 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
                     let newPos = new Vector3(position.X, position.Y, position.Z);
 
                     if (newPos.sub(playerReplicated.PrimaryPart!.Position).Magnitude > 0.1) {
-                        this.walkTo(newPos);
+                        this.walkTo(newPos, true);
                     }
                 }
 
@@ -85,10 +85,17 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
         }
     }
 
-    private walkTo(position: Vector3) {
+    private walkTo(position: Vector3, lock: boolean = false) {
+        // if (this.moveToLocked) return;
+
+        if (lock) {
+            //print("Added lock")
+            this.moveToLocked = lock;
+        }
+
         let rig = this.instance as Model;
         let humanoid = rig.FindFirstChild("Humanoid") as Humanoid;
-        print(this.currentAnimationTrack?.IsPlaying)
+
         if (!this.currentAnimationTrack || !this.currentAnimationTrack.IsPlaying) {
             this.lastAnimationType = AnimationType.Running;
             let animation = new Instance("Animation") as Animation;
@@ -99,18 +106,24 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
 
         humanoid.MoveTo(position);
 
-        humanoid.MoveToFinished.Connect(() => {
+        let finishedSignal: RBXScriptConnection;
+        finishedSignal = humanoid.MoveToFinished.Connect(() => {
             if (this.currentAnimationTrack) this.currentAnimationTrack.Stop();
+            if (this.moveToLocked) {
+                //print("Removing lock")
+                this.moveToLocked = false;
+            }
+            finishedSignal.Disconnect();
         })
     }
 
-    private replicationTickThead(playerId: number) {
+    private replicationTickThead() {
         while (true) {
             let velocity = this.velocity;
             let timeDelta = 0.1;
 
             // Calculate the goal position using velocity
-            let goalPosition = (this.instance as Model).PrimaryPart!.Position.add(velocity.mul(timeDelta * 2));
+            let goalPosition = (this.instance as Model).PrimaryPart!.Position.add(velocity.mul(timeDelta * 3));
 
             // Adjust other parts as needed
             let goal = new Map<string, unknown>();
@@ -129,16 +142,13 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
         }
     }
 
-    private periodicUpdateThread(playerId: number) {
-        // print("Started Update Thread")
+    private periodicUpdateThread() {
         while (true) {
-            // queue an update to the player's position every second
             while (Players.GetPlayers().size() === 0) wait();
             let pos = Players.GetPlayers()[0]!.Character!.PrimaryPart!.Position;
             NetworkService.queueEvent(new Event({
                 p: { x: pos.X, y: pos.Y, z: pos.Z }
             }, EventType.PlayerPositionUpdate));
-            print("Updated!")
             wait(1);
         }
     }

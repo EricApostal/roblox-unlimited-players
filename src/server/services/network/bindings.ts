@@ -6,48 +6,62 @@ export interface OnServerRequestRecieved {
     onServerRequestRecieved(request: ServerRequest): void;
 }
 
+export interface OnNetworkPlayerJoined {
+    onNetworkPlayerJoined(playerId: number): void;
+}
+
+let networkPlayers = new Map<number, boolean>();
+
 @Service()
 class RequestRecievedService implements OnStart {
     onStart() {
-        const listeners = new Set<OnServerRequestRecieved>();
+        // request listeners
+        const requestListeners = new Set<OnServerRequestRecieved>();
+        Modding.onListenerAdded<OnServerRequestRecieved>((object) => requestListeners.add(object));
+        Modding.onListenerRemoved<OnServerRequestRecieved>((object) => requestListeners.delete(object));
 
-        Modding.onListenerAdded<OnServerRequestRecieved>((object) => listeners.add(object));
-        Modding.onListenerRemoved<OnServerRequestRecieved>((object) => listeners.delete(object));
+        // network player joined listeners
+        const networkPlayerJoinedListeners = new Set<OnNetworkPlayerJoined>();
+        Modding.onListenerAdded<OnNetworkPlayerJoined>((object) => networkPlayerJoinedListeners.add(object));
+        Modding.onListenerRemoved<OnNetworkPlayerJoined>((object) => networkPlayerJoinedListeners.delete(object));
 
         NetworkService.event.Connect((request: ServerRequest) => {
             let events = HttpService.JSONDecode(request.events as string) as Array<Event>;
             request.events = events;
 
-            listeners.forEach((listener) => listener.onServerRequestRecieved(request));
+            let id = request.id;
+            if (!networkPlayers.get(id)) {
+                networkPlayers.set(id, true);
+                networkPlayerJoinedListeners.forEach((listener) => listener.onNetworkPlayerJoined(id));
+            }
+
+            requestListeners.forEach((listener) => listener.onServerRequestRecieved(request));
         });
     }
 }
 
 // on player joined
-export interface OnPlayerJoined {
-    onPlayerJoined(player: Player): void;
+export interface OnLocalPlayerJoined {
+    onLocalPlayerJoined(player: Player): void;
 }
 
 @Service()
-class PlayerJoinService implements OnStart {
+class LocalPlayerJoinService implements OnStart {
     onStart() {
-        const listeners = new Set<OnPlayerJoined>();
+        const listeners = new Set<OnLocalPlayerJoined>();
 
-        // Automatically updates the listeners set whenever a listener is added or removed.
-        // You can do more than just keeping track of a set,
-        // e.g fire the new listener's event for all existing players.
-        Modding.onListenerAdded<OnPlayerJoined>((object) => listeners.add(object));
-        Modding.onListenerRemoved<OnPlayerJoined>((object) => listeners.delete(object));
+        Modding.onListenerAdded<OnLocalPlayerJoined>((object) => listeners.add(object));
+        Modding.onListenerRemoved<OnLocalPlayerJoined>((object) => listeners.delete(object));
 
         Players.PlayerAdded.Connect((player) => {
             for (const listener of listeners) {
-                task.spawn(() => listener.onPlayerJoined(player));
+                task.spawn(() => listener.onLocalPlayerJoined(player));
             }
         })
 
         for (const player of Players.GetPlayers()) {
             for (const listener of listeners) {
-                task.spawn(() => listener.onPlayerJoined(player));
+                task.spawn(() => listener.onLocalPlayerJoined(player));
             }
         }
     }

@@ -97,7 +97,7 @@ export namespace NetworkService {
                 while (eventQueue.size() === 0) wait();
                 topic.send(eventQueue);
                 eventQueue.clear();
-                wait(0.2);
+                wait(0.5);
             }
             wait()
         }

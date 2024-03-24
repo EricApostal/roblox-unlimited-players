@@ -71,7 +71,8 @@ export class Event {
 export enum EventType {
     PlayerPositionUpdate,
     PlayerChatSend,
-    PlayerLeavingUpdate
+    PlayerLeavingUpdate,
+    PlayerJumping
 }
 
 export namespace NetworkService {
@@ -93,9 +94,10 @@ export namespace NetworkService {
     spawn(() => {
         while (true) {
             for (let topic of topics) {
+                while (eventQueue.size() === 0) wait();
                 topic.send(eventQueue);
                 eventQueue.clear();
-                wait(0.5);
+                wait(0.2);
             }
             wait()
         }

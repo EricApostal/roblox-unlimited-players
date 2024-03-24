@@ -89,8 +89,8 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
     private walkTo(playerId: number, position: Vector3) {
         let rig = this.instance as Model;
         let humanoid = rig.FindFirstChild("Humanoid") as Humanoid;
-
-        if (this.currentAnimationTrack?.IsPlaying) {
+        print(this.currentAnimationTrack?.IsPlaying)
+        if (!this.currentAnimationTrack || !this.currentAnimationTrack.IsPlaying) {
             this.lastAnimationType = AnimationType.Running;
             let animation = new Instance("Animation") as Animation;
             animation.AnimationId = "rbxassetid://507767714";

@@ -1,4 +1,5 @@
 import { Networking } from "@flamework/networking";
+import { ServerRequest } from "./replication/server-classes";
 
 interface ClientToServerEvents {
     OnJump: () => void;
@@ -6,6 +7,7 @@ interface ClientToServerEvents {
 
 interface ServerToClientEvents {
     SendChatMessage: (message: { playerId: number, message: string }) => void;
+    onEvent: (event: {}) => void;
 }
 
 interface ClientToServerFunctions { }

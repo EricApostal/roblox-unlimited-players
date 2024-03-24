@@ -3,21 +3,15 @@ import { OnStart, Service } from "@flamework/core";
 import { MessagingService, HttpService, Players } from "@rbxts/services";
 import Signal from "@rbxts/signal";
 import { encode, decode } from "./encoding/encode";
+import { Event } from "shared/replication/server-classes";
+import { ServerRequest } from "shared/replication/server-classes";
+
+print("loaded networking!")
 
 let serverId: number = 0;
 let threadCount: number = 28;
 
 let networkEvent = new Signal<(data: ServerRequest) => void>();
-
-export class ServerRequest {
-    id: number;
-    events: string | buffer | Array<Event>;
-
-    constructor(id: number, events: buffer | string) {
-        this.id = id;
-        this.events = events;
-    }
-}
 
 class Topic {
     id: string;
@@ -53,26 +47,6 @@ class Topic {
             print(eventArray)
         }
     }
-}
-
-export class Event {
-    // Data
-    d: unknown;
-
-    // Event Type
-    eT: EventType;
-
-    constructor(data: unknown, eventType: EventType) {
-        this.d = data;
-        this.eT = eventType;
-    }
-}
-
-export enum EventType {
-    PlayerPositionUpdate,
-    PlayerChatSend,
-    PlayerLeavingUpdate,
-    PlayerJumping
 }
 
 export namespace NetworkService {

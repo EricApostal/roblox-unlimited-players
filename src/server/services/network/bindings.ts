@@ -1,6 +1,7 @@
 import { Modding, OnStart, Service } from "@flamework/core";
-import { Event, NetworkService, ServerRequest } from "../networking";
 import { HttpService, Players } from "@rbxts/services";
+import { Event, ServerRequest } from "shared/replication/server-classes";
+import { NetworkService } from "../networking";
 
 export interface OnServerRequestRecieved {
     onServerRequestRecieved(request: ServerRequest): void;

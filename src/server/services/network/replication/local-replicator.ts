@@ -1,9 +1,10 @@
 import { OnStart, Service } from "@flamework/core";
-import { Event, EventType, NetworkService, ServerRequest } from "../../networking";
 import { BaseComponent } from "@flamework/components";
 import { Players, Chat, HttpService, ReplicatedStorage, PhysicsService, RunService } from "@rbxts/services";
 import { OnLocalPlayerJoined, OnNetworkPlayerJoined, OnServerRequestRecieved } from "../bindings";
 import { Events } from "server/network";
+import { NetworkService } from "server/services/networking";
+import { Event, EventType } from "shared/replication/server-classes";
 
 PhysicsService.RegisterCollisionGroup("localplayer")
 PhysicsService.RegisterCollisionGroup("replicatedplayer")
@@ -38,6 +39,7 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
         let playerReplicated = Players.CreateHumanoidModelFromUserId(playerId);
         (playerReplicated.WaitForChild("Humanoid") as Humanoid).DisplayName = Players.GetNameFromUserIdAsync(playerId);
         while (!Players.GetPlayers()[0]) wait();
+        let player = Players.GetPlayers()[0];
         playerReplicated.Parent = game.Workspace;
         playerReplicated.SetAttribute("playerId", playerId);
         playerReplicated.AddTag("replicatedplayer");
@@ -45,6 +47,7 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
         playerReplicated.GetDescendants().forEach((descendant) => {
             if (descendant.IsA("BasePart")) {
                 descendant.CollisionGroup = "replicatedplayer"
+                descendant.SetNetworkOwner(player);
             }
         });
     }

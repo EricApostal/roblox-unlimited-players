@@ -1,15 +1,24 @@
 import { BaseComponent, Component } from "@flamework/components";
 import { OnStart } from "@flamework/core";
-import { Players, Chat, TweenService } from "@rbxts/services";
-import { Events } from "server/network";
-import { NetworkRecieverService } from "server/services/network/reciever.";
-import { Event, EventType, NetworkService, ServerRequest } from "server/services/networking";
+import { Players, Chat, TweenService, RunService } from "@rbxts/services";
+import { NetworkRecieverService } from "client/controllers/client-reciever";
+import { Events } from "client/network";
+import { ChatReplicator } from "client/replication/chat";
+import { Event, EventType, ServerRequest } from "shared/replication/server-classes";
 
 enum AnimationType {
     Running,
     Jumping,
     Idle
 }
+
+/*
+TODO: Working on migrating most logic to client
+The idea is that movement tweening will be smoother
+
+You can send all the data, but that might not be ideal.
+It might work best if you scale / filter the data based on distance *before* replicating it via remotes
+*/
 
 @Component({ tag: "replicatedplayer" })
 export class ReplicatedRig extends BaseComponent implements OnStart {
@@ -27,9 +36,13 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
     onStart(): void {
         this.playerId = this.instance.GetAttribute("playerId") as number;
 
-        NetworkRecieverService.getSignal(this.playerId!).Connect((request: ServerRequest) => {
-            this.onServerRequestRecieved(request);
+        NetworkRecieverService.getSignal(this.playerId).Connect((request) => {
+            this.onServerRequestRecieved(request as unknown as ServerRequest);
         });
+
+        RunService.RenderStepped.Connect(() => {
+            (this.instance as Model).PrimaryPart!.Orientation = new Vector3(0, 0, 0);
+        })
 
         task.spawn(() => this.replicationTickThead());
     }
@@ -56,7 +69,7 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
                     if (newPos.sub(playerReplicated.PrimaryPart!.Position).Magnitude > 3) {
                         let goal = {
                             Position: newPos,
-                            Orientation: new Vector3(0, this.orientation.Y, 0)
+                            // Orientation: new Vector3(0, 0, 0)
                         }
                         if (!this.moveToLocked) {
                             let tween = TweenService.Create(playerReplicated.PrimaryPart!, new TweenInfo(0.5, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), goal);
@@ -77,7 +90,7 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
             }
 
             if (event.eT === EventType.PlayerChatSend) {
-                Events.SendChatMessage(Players.GetPlayers()[0]!, { playerId: this.playerId!, message: event.d as string });
+                ChatReplicator.sendMessage(this.playerId!, event.d as string);
                 Chat.Chat((this.instance as Model).FindFirstChild("Head")! as BasePart, event.d as string);
             }
 
@@ -129,16 +142,16 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
         let movetoBind: RBXScriptConnection;
         movetoBind = humanoid.MoveToFinished.Connect((reached: boolean) => {
             // if (this.currentAnimationTrack) this.currentAnimationTrack.Stop();
-            wait(0.25);
-            humanoid.AutoRotate = false;
-            let orientationTween = TweenService.Create((this.instance as Model)!.PrimaryPart as BasePart,
-                new TweenInfo(0.1, Enum.EasingStyle.Linear,
-                    Enum.EasingDirection.InOut),
-                { "Orientation": new Vector3(0, this.orientation.Y, 0) });
+            // wait(0.25);
+            // humanoid.AutoRotate = false;
+            // let orientationTween = TweenService.Create((this.instance as Model)!.PrimaryPart as BasePart,
+            //     new TweenInfo(0.1, Enum.EasingStyle.Linear,
+            //         Enum.EasingDirection.InOut),
+            //     { "Orientation": new Vector3(0, this.orientation.Y, 0) });
 
-            orientationTween.Completed.Connect(() => {
-                humanoid.AutoRotate = autoRotate;
-            });
+            // orientationTween.Completed.Connect(() => {
+            //     humanoid.AutoRotate = autoRotate;
+            // });
 
             // humanoid.AutoRotate = false;
             // (this.instance as Model).PrimaryPart!.Orientation = new Vector3(0, this.orientation.Y, 0);

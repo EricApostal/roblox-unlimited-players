@@ -1,6 +1,6 @@
 import { BaseComponent, Component } from "@flamework/components";
 import { OnStart } from "@flamework/core";
-import { Players, Chat } from "@rbxts/services";
+import { Players, Chat, TweenService } from "@rbxts/services";
 import { Events } from "server/network";
 import { NetworkRecieverService } from "server/services/network/reciever.";
 import { Event, EventType, NetworkService, ServerRequest } from "server/services/networking";
@@ -32,7 +32,6 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
         });
 
         task.spawn(() => this.replicationTickThead());
-        task.spawn(() => this.periodicUpdateThread());
     }
 
     private onServerRequestRecieved(request: ServerRequest) {
@@ -54,7 +53,6 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
 
                 if (position) {
                     let newPos = new Vector3(position.X, position.Y, position.Z);
-
                     if (newPos.sub(playerReplicated.PrimaryPart!.Position).Magnitude > 0.1) {
                         this.walkTo(newPos, true);
                     }
@@ -86,12 +84,6 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
     }
 
     private walkTo(position: Vector3, lock: boolean = false) {
-        // if (this.moveToLocked) return;
-
-        if (lock) {
-            //print("Added lock")
-            this.moveToLocked = lock;
-        }
 
         let rig = this.instance as Model;
         let humanoid = rig.FindFirstChild("Humanoid") as Humanoid;
@@ -105,16 +97,6 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
         }
 
         humanoid.MoveTo(position);
-
-        let finishedSignal: RBXScriptConnection;
-        finishedSignal = humanoid.MoveToFinished.Connect(() => {
-            if (this.currentAnimationTrack) this.currentAnimationTrack.Stop();
-            if (this.moveToLocked) {
-                //print("Removing lock")
-                this.moveToLocked = false;
-            }
-            finishedSignal.Disconnect();
-        })
     }
 
     private replicationTickThead() {
@@ -123,33 +105,22 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
             let timeDelta = 0.1;
 
             // Calculate the goal position using velocity
-            let goalPosition = (this.instance as Model).PrimaryPart!.Position.add(velocity.mul(timeDelta * 3));
-
-            // Adjust other parts as needed
-            let goal = new Map<string, unknown>();
-            goal.set("Position", goalPosition);
-            goal.set("Orientation", new Vector3(0, this.orientation.Y, 0));
+            let goalPosition = (this.instance as Model).PrimaryPart!.Position.add(velocity.mul(timeDelta * 2));
 
             let humanoid = this.instance.FindFirstChild("Humanoid") as Humanoid;
             humanoid.WalkSpeed = 16;
             humanoid.UseJumpPower = true;
 
-            if (goalPosition.sub((this.instance as Model).PrimaryPart!.Position).Magnitude > 0.1) {
+            if (goalPosition.sub((this.instance as Model).PrimaryPart!.Position).Magnitude > 2) {
                 this.walkTo(goalPosition);
+            } else {
+                if (this.currentAnimationTrack) {
+                    this.currentAnimationTrack.Stop();
+                    this.currentAnimationTrack = undefined;
+                }
             }
 
             wait(timeDelta / 2);
-        }
-    }
-
-    private periodicUpdateThread() {
-        while (true) {
-            while (Players.GetPlayers().size() === 0) wait();
-            let pos = Players.GetPlayers()[0]!.Character!.PrimaryPart!.Position;
-            NetworkService.queueEvent(new Event({
-                p: { x: pos.X, y: pos.Y, z: pos.Z }
-            }, EventType.PlayerPositionUpdate));
-            wait(1);
         }
     }
 }

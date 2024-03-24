@@ -21,8 +21,34 @@ enum AnimationType {
 export class PlayerMovementReplicationService extends BaseComponent implements OnStart, OnLocalPlayerJoined, OnNetworkPlayerJoined {
     lastVelocityUpdate = new Vector3(0, 0, 0);
     lastOrientationUpdate = new Vector3(0, 0, 0);
+    numberPrecision = 1;
 
     onStart() {
+        task.spawn(() => {
+            this.persistentUpdateThread();
+        });
+
+        task.spawn(() => {
+            this.periodicUpdateThread();
+        });
+    }
+
+    onNetworkPlayerJoined(playerId: number): void {
+        let playerReplicated = Players.CreateHumanoidModelFromUserId(playerId);
+        (playerReplicated.WaitForChild("Humanoid") as Humanoid).DisplayName = Players.GetNameFromUserIdAsync(playerId);
+        while (!Players.GetPlayers()[0]) wait();
+        playerReplicated.Parent = game.Workspace;
+        playerReplicated.SetAttribute("playerId", playerId);
+        playerReplicated.AddTag("replicatedplayer");
+        playerReplicated.MoveTo(Players.GetPlayers()[0]!.Character!.PrimaryPart!.Position);
+        playerReplicated.GetDescendants().forEach((descendant) => {
+            if (descendant.IsA("BasePart")) {
+                descendant.CollisionGroup = "replicatedplayer"
+            }
+        });
+    }
+
+    private persistentUpdateThread() {
         while (true) {
             for (const player of Players.GetPlayers()) {
                 let char = player.Character;
@@ -46,7 +72,7 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                     animationType = AnimationType.Jumping;
                 }
 
-                let newVelocity = { x: math.round(velocity.X * precision) / precision, y: math.round(velocity.Y * precision) / precision, z: math.round(velocity.Z * precision) / precision };
+                let newVelocity = this.getVelocity();
                 let newOrientation = { x: math.round(char.PrimaryPart!.Orientation.X * precision) / precision, y: math.round(char.PrimaryPart!.Orientation.Y * precision) / precision, z: math.round(char.PrimaryPart!.Orientation.Z * precision) / precision };
 
                 let velocityMag = new Vector3(newVelocity.x, newVelocity.y, newVelocity.z).sub(this.lastVelocityUpdate).Magnitude;
@@ -69,19 +95,23 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
         }
     }
 
-    onNetworkPlayerJoined(playerId: number): void {
-        let playerReplicated = Players.CreateHumanoidModelFromUserId(playerId);
-        (playerReplicated.WaitForChild("Humanoid") as Humanoid).DisplayName = Players.GetNameFromUserIdAsync(playerId);
-        while (!Players.GetPlayers()[0]) wait();
-        playerReplicated.Parent = game.Workspace;
-        playerReplicated.SetAttribute("playerId", playerId);
-        playerReplicated.AddTag("replicatedplayer");
-        playerReplicated.MoveTo(Players.GetPlayers()[0]!.Character!.PrimaryPart!.Position);
-        playerReplicated.GetDescendants().forEach((descendant) => {
-            if (descendant.IsA("BasePart")) {
-                descendant.CollisionGroup = "replicatedplayer"
-            }
-        });
+    private getVelocity() {
+        let velocity = Players.GetPlayers()[0]!.Character!.PrimaryPart!.AssemblyLinearVelocity;
+        return { x: math.round(velocity.X * this.numberPrecision) / this.numberPrecision, y: math.round(velocity.Y * this.numberPrecision) / this.numberPrecision, z: math.round(velocity.Z * this.numberPrecision) / this.numberPrecision };
+    }
+
+    private periodicUpdateThread() {
+        while (true) {
+            while (Players.GetPlayers().size() === 0) wait();
+            while (!Players.GetPlayers()[0]!.Character) wait();
+            let pos = Players.GetPlayers()[0]!.Character!.PrimaryPart!.Position;
+            let vel = this.getVelocity();
+            NetworkService.queueEvent(new Event({
+                p: { x: pos.X, y: pos.Y, z: pos.Z },
+                v: { x: vel.x, y: vel.y, z: vel.z },
+            }, EventType.PlayerPositionUpdate));
+            wait(1);
+        }
     }
 
     onLocalPlayerJoined(player: Player): void {

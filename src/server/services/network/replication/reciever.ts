@@ -27,6 +27,8 @@ class PlayerState {
     orientation: Vector3 = new Vector3(0, 0, 0);
     lastVelocityUpdate: Vector3 = new Vector3(0, 0, 0);
     lastOrientationUpdate: Vector3 = new Vector3(0, 0, 0);
+    position: Vector3 = new Vector3(0, 0, 0);
+    shouldUpdatePosition: boolean = false;
 }
 
 @Service()
@@ -138,7 +140,6 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
             playerState.currentAnimationTrack.Play();
         }
 
-        print(position)
         humanoid.MoveTo(position);
 
         humanoid.MoveToFinished.Connect(() => {
@@ -178,9 +179,11 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
     }
 
     private periodicUpdateThread(playerId: number) {
+        print("Started Update Thread")
         while (true) {
             // queue an update to the player's position every second
-            let pos = Players.GetPlayerByUserId(playerId)!.Character!.PrimaryPart!.Position;
+            while (Players.GetPlayers().size() === 0) wait();
+            let pos = Players.GetPlayers()[0]!.Character!.PrimaryPart!.Position;
             NetworkService.queueEvent(new Event({
                 p: { x: pos.X, y: pos.Y, z: pos.Z }
             }, EventType.PlayerPositionUpdate));
@@ -227,7 +230,6 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                 if (orientation) playerState.orientation = new Vector3(orientation.x, orientation.y, orientation.z);
 
                 if (position) {
-                    print("walking to position")
                     let newPos = new Vector3(position.X, position.Y, position.Z);
 
                     if (newPos.sub(playerReplicated.PrimaryPart!.Position).Magnitude > 0.1) {

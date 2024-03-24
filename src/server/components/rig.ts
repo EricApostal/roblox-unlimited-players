@@ -83,8 +83,7 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
         }
     }
 
-    private walkTo(position: Vector3, lock: boolean = false) {
-
+    private walkTo(position: Vector3, autoRotate: boolean = true) {
         let rig = this.instance as Model;
         let humanoid = rig.FindFirstChild("Humanoid") as Humanoid;
 
@@ -94,9 +93,31 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
             animation.AnimationId = "rbxassetid://507767714";
             this.currentAnimationTrack = (rig.WaitForChild("Humanoid").WaitForChild("Animator") as Animator).LoadAnimation(animation);
             this.currentAnimationTrack.Play();
-        }
+        };
 
+        humanoid.AutoRotate = autoRotate;
         humanoid.MoveTo(position);
+
+        let movetoBind: RBXScriptConnection;
+        movetoBind = humanoid.MoveToFinished.Connect((reached: boolean) => {
+            if (this.currentAnimationTrack) this.currentAnimationTrack.Stop();
+            wait(0.25);
+            humanoid.AutoRotate = false;
+            let orientationTween = TweenService.Create((this.instance as Model)!.PrimaryPart as BasePart,
+                new TweenInfo(0.1, Enum.EasingStyle.Linear,
+                    Enum.EasingDirection.InOut),
+                { "Orientation": new Vector3(0, this.orientation.Y, 0) });
+
+            orientationTween.Completed.Connect(() => {
+                humanoid.AutoRotate = true;
+            });
+
+            humanoid.AutoRotate = false;
+            (this.instance as Model).PrimaryPart!.Orientation = new Vector3(0, this.orientation.Y, 0);
+            humanoid.AutoRotate = autoRotate;
+
+            movetoBind.Disconnect();
+        })
     }
 
     private replicationTickThead() {
@@ -105,7 +126,7 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
             let timeDelta = 0.1;
 
             // Calculate the goal position using velocity
-            let goalPosition = (this.instance as Model).PrimaryPart!.Position.add(velocity.mul(timeDelta * 2));
+            let goalPosition = (this.instance as Model).PrimaryPart!.Position.add(velocity.mul(timeDelta * 2.8));
 
             let humanoid = this.instance.FindFirstChild("Humanoid") as Humanoid;
             humanoid.WalkSpeed = 16;

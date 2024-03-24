@@ -3,6 +3,7 @@ import { Event, EventType, NetworkService, ServerRequest } from "../../networkin
 import { BaseComponent } from "@flamework/components";
 import { Players, Chat, HttpService, ReplicatedStorage, PhysicsService, RunService } from "@rbxts/services";
 import { OnLocalPlayerJoined, OnNetworkPlayerJoined, OnServerRequestRecieved } from "../bindings";
+import { Events } from "server/network";
 
 PhysicsService.RegisterCollisionGroup("localplayer")
 PhysicsService.RegisterCollisionGroup("replicatedplayer")
@@ -110,7 +111,7 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                 p: { x: pos.X, y: pos.Y, z: pos.Z },
                 v: { x: vel.x, y: vel.y, z: vel.z },
             }, EventType.PlayerPositionUpdate));
-            wait(1);
+            wait(0.5);
         }
     }
 
@@ -124,15 +125,9 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
             wait(1);
         });
 
-        task.spawn(() => {
-            // TODO: migrate to client
-            while (!player.Character) wait();
-            let humanoid = (player.Character!.WaitForChild("Humanoid") as Humanoid);
-
-            humanoid.Jumping.Connect((active: boolean) => {
-                NetworkService.queueEvent(new Event(undefined, EventType.PlayerJumping));
-            });
-        });
+        Events.OnJump.connect(() => {
+            NetworkService.queueEvent(new Event(undefined, EventType.PlayerJumping));
+        })
 
         player.CharacterAdded.Connect((char) => {
             char.GetDescendants().forEach(descendant => {

@@ -53,8 +53,23 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
 
                 if (position) {
                     let newPos = new Vector3(position.X, position.Y, position.Z);
-                    if (newPos.sub(playerReplicated.PrimaryPart!.Position).Magnitude > 0.1) {
-                        this.walkTo(newPos, true);
+                    if (newPos.sub(playerReplicated.PrimaryPart!.Position).Magnitude > 3) {
+                        let goal = {
+                            Position: newPos,
+                            Orientation: new Vector3(0, this.orientation.Y, 0)
+                        }
+                        if (!this.moveToLocked) {
+                            let tween = TweenService.Create(playerReplicated.PrimaryPart!, new TweenInfo(0.5, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), goal);
+                            tween.Play();
+                            this.moveToLocked = true;
+                            this.doAnimation(AnimationType.Running);
+                            tween.Completed.Connect(() => {
+                                // this.stopAnimation();
+                                this.position = newPos;
+                                this.moveToLocked = false;
+                            });
+                        }
+
                     }
                 }
 
@@ -83,24 +98,37 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
         }
     }
 
+    private doAnimation(animationType: AnimationType) {
+        if (!this.currentAnimationTrack || !this.currentAnimationTrack.IsPlaying) {
+            this.lastAnimationType = animationType;
+            let animation = new Instance("Animation") as Animation;
+            animation.AnimationId = "rbxassetid://507767714";
+            this.currentAnimationTrack = ((this.instance as Model).WaitForChild("Humanoid").WaitForChild("Animator") as Animator).LoadAnimation(animation);
+            this.currentAnimationTrack.Play();
+        };
+    }
+
+    private stopAnimation() {
+        if (this.currentAnimationTrack) {
+            this.currentAnimationTrack.Stop();
+            this.currentAnimationTrack = undefined;
+        }
+    }
+
     private walkTo(position: Vector3, autoRotate: boolean = true) {
+        if (this.moveToLocked) return;
+
         let rig = this.instance as Model;
         let humanoid = rig.FindFirstChild("Humanoid") as Humanoid;
 
-        if (!this.currentAnimationTrack || !this.currentAnimationTrack.IsPlaying) {
-            this.lastAnimationType = AnimationType.Running;
-            let animation = new Instance("Animation") as Animation;
-            animation.AnimationId = "rbxassetid://507767714";
-            this.currentAnimationTrack = (rig.WaitForChild("Humanoid").WaitForChild("Animator") as Animator).LoadAnimation(animation);
-            this.currentAnimationTrack.Play();
-        };
+        this.doAnimation(AnimationType.Running);
 
         humanoid.AutoRotate = autoRotate;
         humanoid.MoveTo(position);
 
         let movetoBind: RBXScriptConnection;
         movetoBind = humanoid.MoveToFinished.Connect((reached: boolean) => {
-            if (this.currentAnimationTrack) this.currentAnimationTrack.Stop();
+            // if (this.currentAnimationTrack) this.currentAnimationTrack.Stop();
             wait(0.25);
             humanoid.AutoRotate = false;
             let orientationTween = TweenService.Create((this.instance as Model)!.PrimaryPart as BasePart,
@@ -109,12 +137,12 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
                 { "Orientation": new Vector3(0, this.orientation.Y, 0) });
 
             orientationTween.Completed.Connect(() => {
-                humanoid.AutoRotate = true;
+                humanoid.AutoRotate = autoRotate;
             });
 
-            humanoid.AutoRotate = false;
-            (this.instance as Model).PrimaryPart!.Orientation = new Vector3(0, this.orientation.Y, 0);
-            humanoid.AutoRotate = autoRotate;
+            // humanoid.AutoRotate = false;
+            // (this.instance as Model).PrimaryPart!.Orientation = new Vector3(0, this.orientation.Y, 0);
+            // humanoid.AutoRotate = autoRotate;
 
             movetoBind.Disconnect();
         })
@@ -126,7 +154,7 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
             let timeDelta = 0.1;
 
             // Calculate the goal position using velocity
-            let goalPosition = (this.instance as Model).PrimaryPart!.Position.add(velocity.mul(timeDelta * 2.8));
+            let goalPosition = (this.instance as Model).PrimaryPart!.Position.add(velocity.mul(timeDelta * 2.5));
 
             let humanoid = this.instance.FindFirstChild("Humanoid") as Humanoid;
             humanoid.WalkSpeed = 16;
@@ -141,7 +169,7 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
                 }
             }
 
-            wait(timeDelta / 2);
+            wait(timeDelta);
         }
     }
 }

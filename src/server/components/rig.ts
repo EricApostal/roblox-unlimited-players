@@ -2,7 +2,7 @@ import { BaseComponent, Component } from "@flamework/components";
 import { OnStart } from "@flamework/core";
 import { Players, Chat } from "@rbxts/services";
 import { Events } from "server/network";
-import { NetworkRecieverService } from "server/services/network/replication/reciever.";
+import { NetworkRecieverService } from "server/services/network/reciever.";
 import { Event, EventType, NetworkService, ServerRequest } from "server/services/networking";
 
 enum AnimationType {
@@ -28,7 +28,6 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
         this.playerId = this.instance.GetAttribute("playerId") as number;
 
         NetworkRecieverService.getSignal(this.playerId!).Connect((request: ServerRequest) => {
-            print("Recieved request!")
             this.onServerRequestRecieved(request);
         });
 
@@ -57,7 +56,7 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
                     let newPos = new Vector3(position.X, position.Y, position.Z);
 
                     if (newPos.sub(playerReplicated.PrimaryPart!.Position).Magnitude > 0.1) {
-                        this.walkTo(this.playerId!, newPos);
+                        this.walkTo(newPos);
                     }
                 }
 
@@ -86,7 +85,7 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
         }
     }
 
-    private walkTo(playerId: number, position: Vector3) {
+    private walkTo(position: Vector3) {
         let rig = this.instance as Model;
         let humanoid = rig.FindFirstChild("Humanoid") as Humanoid;
         print(this.currentAnimationTrack?.IsPlaying)
@@ -123,10 +122,10 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
             humanoid.UseJumpPower = true;
 
             if (goalPosition.sub((this.instance as Model).PrimaryPart!.Position).Magnitude > 0.1) {
-                this.walkTo(playerId, goalPosition);
+                this.walkTo(goalPosition);
             }
 
-            wait(timeDelta);
+            wait(timeDelta / 2);
         }
     }
 

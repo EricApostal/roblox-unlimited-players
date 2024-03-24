@@ -1,1 +1,0 @@
-export const replicationRigs: Map<number, Model> = new Map();

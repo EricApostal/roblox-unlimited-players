@@ -1,6 +1,6 @@
 import { BaseComponent } from "@flamework/components";
 import { Service } from "@flamework/core";
-import { OnServerRequestRecieved } from "../bindings";
+import { OnServerRequestRecieved } from "./bindings";
 import Signal from "@rbxts/signal";
 import { ServerRequest } from "server/services/networking";
 

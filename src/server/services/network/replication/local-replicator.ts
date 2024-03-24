@@ -3,15 +3,13 @@ import { Event, EventType, NetworkService, ServerRequest } from "../../networkin
 import { BaseComponent } from "@flamework/components";
 import { Players, Chat, HttpService, ReplicatedStorage, PhysicsService, RunService } from "@rbxts/services";
 import { OnLocalPlayerJoined, OnNetworkPlayerJoined, OnServerRequestRecieved } from "../bindings";
-import { replicationRigs } from "./state";
-import { Events } from "server/network";
 
 PhysicsService.RegisterCollisionGroup("localplayer")
 PhysicsService.RegisterCollisionGroup("replicatedplayer")
 
-if (RunService.IsStudio()) {
-    PhysicsService.CollisionGroupSetCollidable("localplayer", "replicatedplayer", false)
-}
+//if (RunService.IsStudio()) {
+PhysicsService.CollisionGroupSetCollidable("localplayer", "replicatedplayer", false)
+//}
 
 enum AnimationType {
     Running,
@@ -19,26 +17,12 @@ enum AnimationType {
     Idle
 }
 
-class PlayerState {
-    lastAnimationType: AnimationType | undefined;
-    currentAnimationTrack: AnimationTrack | undefined;
-    isJumping: boolean = false;
-    velocity: Vector3 = new Vector3(0, 0, 0);
-    orientation: Vector3 = new Vector3(0, 0, 0);
-    lastVelocityUpdate: Vector3 = new Vector3(0, 0, 0);
-    lastOrientationUpdate: Vector3 = new Vector3(0, 0, 0);
-    position: Vector3 = new Vector3(0, 0, 0);
-    shouldUpdatePosition: boolean = false;
-}
-
 @Service()
 export class PlayerMovementReplicationService extends BaseComponent implements OnStart, OnLocalPlayerJoined, OnNetworkPlayerJoined {
-
-    playerStates: Map<number, PlayerState> | undefined
+    lastVelocityUpdate = new Vector3(0, 0, 0);
+    lastOrientationUpdate = new Vector3(0, 0, 0);
 
     onStart() {
-        this.playerStates = new Map<number, PlayerState>();
-
         while (true) {
             for (const player of Players.GetPlayers()) {
                 let char = player.Character;
@@ -65,20 +49,21 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                 let newVelocity = { x: math.round(velocity.X * precision) / precision, y: math.round(velocity.Y * precision) / precision, z: math.round(velocity.Z * precision) / precision };
                 let newOrientation = { x: math.round(char.PrimaryPart!.Orientation.X * precision) / precision, y: math.round(char.PrimaryPart!.Orientation.Y * precision) / precision, z: math.round(char.PrimaryPart!.Orientation.Z * precision) / precision };
 
-                // let velocityMag = new Vector3(newVelocity.x, newVelocity.y, newVelocity.z).sub(this.getPlayerState(player.UserId).lastVelocityUpdate).Magnitude;
-                // let orientationMag = new Vector3(newOrientation.x, newOrientation.y, newOrientation.z).sub(this.getPlayerState(player.UserId).lastOrientationUpdate).Magnitude;
+                let velocityMag = new Vector3(newVelocity.x, newVelocity.y, newVelocity.z).sub(this.lastVelocityUpdate).Magnitude;
+                let orientationMag = new Vector3(newOrientation.x, newOrientation.y, newOrientation.z).sub(this.lastOrientationUpdate).Magnitude;
 
-                // if (velocityMag < 0.01 && orientationMag < 0.01) {
-                //     continue;
-                // }
+                if (velocityMag < 0.01 && orientationMag < 0.01) {
+                    continue;
+                }
+
                 NetworkService.queueEvent(new Event({
                     v: newVelocity,
                     o: newOrientation,
                     a: animationType
                 }, EventType.PlayerPositionUpdate));
 
-                // this.getPlayerState(player.UserId).lastVelocityUpdate = new Vector3(newVelocity.x, newVelocity.y, newVelocity.z);
-                // this.getPlayerState(player.UserId).lastOrientationUpdate = new Vector3(newOrientation.x, newOrientation.y, newOrientation.z);
+                this.lastVelocityUpdate = new Vector3(newVelocity.x, newVelocity.y, newVelocity.z);
+                this.lastOrientationUpdate = new Vector3(newOrientation.x, newOrientation.y, newOrientation.z);
             }
             wait();
         }

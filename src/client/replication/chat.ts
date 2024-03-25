@@ -31,6 +31,7 @@ export namespace ChatReplicator {
             }
 
             let split = textChatMessage.Text.split(":");
+            senderName = split[0];
             split.remove(0);
 
             let result;

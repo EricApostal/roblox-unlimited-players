@@ -51,7 +51,7 @@ class _CameraController implements OnStart {
             camera.CFrame = camera.CFrame.Lerp(newCameraCFrame.add(new Vector3(0, 2.5, 0)), 0.4);
         };
 
-        RunService.RenderStepped.Connect(updateCamera);
+        RunService.PreRender.Connect(updateCamera);
         UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter;
     }
 }

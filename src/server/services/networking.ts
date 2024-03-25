@@ -23,7 +23,7 @@ class Topic {
             let data = (_d as Map<string, unknown>).get("Data") as ServerRequest;
             if (
                 ((data.id) === serverId)
-                // && !game.GetService("RunService").IsStudio()
+                && !game.GetService("RunService").IsStudio()
             ) return;
 
             // clean up data

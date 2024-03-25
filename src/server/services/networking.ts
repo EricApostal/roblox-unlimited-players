@@ -6,8 +6,6 @@ import { encode, decode } from "./encoding/encode";
 import { Event } from "shared/replication/server-classes";
 import { ServerRequest } from "shared/replication/server-classes";
 
-print("loaded networking!")
-
 let serverId: number = 0;
 let threadCount: number = 28;
 
@@ -71,7 +69,7 @@ export namespace NetworkService {
                 while (eventQueue.size() === 0) wait();
                 topic.send(eventQueue);
                 eventQueue.clear();
-                wait(0.5);
+                wait(0.3);
             }
             wait()
         }

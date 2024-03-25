@@ -1,6 +1,6 @@
 import { OnStart, Service } from "@flamework/core";
 import { BaseComponent } from "@flamework/components";
-import { Players, Chat, HttpService, ReplicatedStorage, PhysicsService, RunService } from "@rbxts/services";
+import { Players, Chat, HttpService, ReplicatedStorage, PhysicsService, RunService, TextService } from "@rbxts/services";
 import { OnLocalPlayerJoined, OnNetworkPlayerJoined, OnServerRequestRecieved } from "../bindings";
 import { Events } from "server/network";
 import { NetworkService } from "server/services/networking";
@@ -122,7 +122,7 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                 v: { x: vel.x, y: vel.y, z: vel.z },
                 o: { x: orientation.x, y: orientation.y, z: orientation.z }
             }, EventType.PlayerPositionUpdate));
-            wait(0.5);
+            wait(1);
         }
     }
 

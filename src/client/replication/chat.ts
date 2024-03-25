@@ -1,5 +1,5 @@
 import { StarterGui, Chat, RunService, Players } from "@rbxts/services";
-import { Events } from "client/network";
+import { Events, Functions } from "client/network";
 
 let TextChatService = game.GetService("TextChatService");
 
@@ -8,7 +8,6 @@ export namespace ChatReplicator {
 
     export function sendMessage(playerId: number, message: string) {
         let formattedMessage = `${Players.GetNameFromUserIdAsync(playerId)}: ${message}`;
-
         (TextChatService.WaitForChild("TextChannels").WaitForChild("RBXGeneral") as TextChannel).DisplaySystemMessage(formattedMessage);
     };
 
@@ -30,9 +29,15 @@ export namespace ChatReplicator {
 
             let split = textChatMessage.Text.split(":");
             split.remove(0);
-            let content = split.join(":");
 
-            overrideProperties.Text = string.format(`<font color='${randomHexColor}'>%s</font>: %s`, senderName, content);
+            let result;
+            Functions.filterString.invoke(split.join(":")).andThen((filteredMessage) => {
+                result = filteredMessage;
+            });
+
+            while (!result) wait();
+
+            overrideProperties.Text = string.format(`<font color='${randomHexColor}'>%s</font>: %s`, senderName, result);
 
             return overrideProperties;
         }

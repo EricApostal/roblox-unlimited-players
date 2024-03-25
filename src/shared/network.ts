@@ -10,7 +10,9 @@ interface ServerToClientEvents {
     onEvent: (event: {}) => void;
 }
 
-interface ClientToServerFunctions { }
+interface ClientToServerFunctions {
+    filterString(string: string): string;
+}
 
 interface ServerToClientFunctions { }
 

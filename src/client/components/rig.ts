@@ -40,10 +40,6 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
             this.onServerRequestRecieved(request as unknown as ServerRequest);
         });
 
-        RunService.RenderStepped.Connect(() => {
-            // (this.instance as Model).PrimaryPart!.Orientation = new Vector3(0, 0, 0);
-        })
-
         task.spawn(() => this.replicationTickThead());
     }
 
@@ -65,30 +61,26 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
                 if (orientation) this.orientation = new Vector3(orientation.x, orientation.y, orientation.z);
 
                 if (position) {
-                    let newPos = new Vector3(position.X, position.Y, position.Z);
-                    if (newPos.sub(playerReplicated.PrimaryPart!.Position).Magnitude > 3) {
-                        let newCframe = new CFrame(newPos);
-                        if (orientation) {
-                            newCframe = newCframe.mul(CFrame.Angles(0, orientation.y, 0));
-                        }
+                    let newPos = new Vector3(position.X, position.Y + 0.25, position.Z);
+                    let newCframe = new CFrame(newPos).mul(CFrame.Angles(0, math.rad(orientation.y), 0));
 
-                        let goal = {
-                            CFrame: newCframe
-                        }
-                        // playerReplicated.PrimaryPart!.CFrame = new CFrame(newPos);
-                        if (!this.moveToLocked) {
-                            let tween = TweenService.Create(playerReplicated.PrimaryPart!, new TweenInfo(0.2, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), goal);
-                            tween.Play();
-                            this.moveToLocked = true;
-                            this.doAnimation(AnimationType.Running);
-                            tween.Completed.Connect(() => {
-                                // this.stopAnimation();
-                                this.position = newPos;
-                                this.moveToLocked = false;
-                            });
-                        }
-
+                    let goal = {
+                        CFrame: newCframe
                     }
+
+                    let humanoid = playerReplicated.WaitForChild("Humanoid") as Humanoid;
+                    humanoid.AutoRotate = false;
+
+                    let tween = TweenService.Create(playerReplicated.PrimaryPart!, new TweenInfo(0.3, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), goal);
+                    tween.Play();
+
+                    this.moveToLocked = true;
+                    tween.Completed.Connect(() => {
+                        // humanoid.AutoRotate = true;
+                        humanoid.AutoRotate = false;
+                        this.position = newPos;
+                        this.moveToLocked = false;
+                    });
                 }
 
                 wait();
@@ -141,29 +133,30 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
 
         this.doAnimation(AnimationType.Running);
 
-        humanoid.AutoRotate = autoRotate;
+        humanoid.AutoRotate = false;
         humanoid.MoveTo(position);
 
-        let movetoBind: RBXScriptConnection;
-        movetoBind = humanoid.MoveToFinished.Connect((reached: boolean) => {
-            // if (this.currentAnimationTrack) this.currentAnimationTrack.Stop();
-            // wait(0.25);
-            // humanoid.AutoRotate = false;
-            // let orientationTween = TweenService.Create((this.instance as Model)!.PrimaryPart as BasePart,
-            //     new TweenInfo(0.1, Enum.EasingStyle.Linear,
-            //         Enum.EasingDirection.InOut),
-            //     { "Orientation": new Vector3(0, this.orientation.Y, 0) });
+        // let movetoBind: RBXScriptConnection;
+        // movetoBind = humanoid.MoveToFinished.Connect((reached: boolean) => {
+        //     if (this.currentAnimationTrack) this.currentAnimationTrack.Stop();
+        //     wait(0.25);
+        //     humanoid.AutoRotate = false;
+        //     let orientationTween = TweenService.Create((this.instance as Model)!.PrimaryPart as BasePart,
+        //         new TweenInfo(0.1, Enum.EasingStyle.Linear,
+        //             Enum.EasingDirection.InOut),
+        //         { "CFrame": new CFrame((this.instance as Model)!.PrimaryPart!.Position).mul(CFrame.Angles(0, this.orientation.Y, 0)) });
+        //     orientationTween.Play();
 
-            // orientationTween.Completed.Connect(() => {
-            //     humanoid.AutoRotate = autoRotate;
-            // });
+        //     orientationTween.Completed.Connect(() => {
+        //         humanoid.AutoRotate = autoRotate;
+        //     });
 
-            // humanoid.AutoRotate = false;
-            // (this.instance as Model).PrimaryPart!.Orientation = new Vector3(0, this.orientation.Y, 0);
-            // humanoid.AutoRotate = autoRotate;
+        //     humanoid.AutoRotate = false;
+        //     // (this.instance as Model).PrimaryPart!.Orientation = new Vector3(0, this.orientation.Y, 0);
+        //     humanoid.AutoRotate = autoRotate;
 
-            movetoBind.Disconnect();
-        })
+        //     movetoBind.Disconnect();
+        // })
     }
 
     private replicationTickThead() {
@@ -180,7 +173,7 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
             humanoid.WalkSpeed = 16;
             humanoid.UseJumpPower = true;
 
-            if (goalPosition.sub((this.instance as Model).PrimaryPart!.Position).Magnitude > 2) {
+            if (goalPosition.sub((this.instance as Model).PrimaryPart!.Position).Magnitude > 1) {
                 this.walkTo(goalPosition);
             } else {
                 if (this.currentAnimationTrack) {

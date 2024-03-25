@@ -21,6 +21,7 @@ class _CameraController implements OnStart {
         });
 
         camera.CameraType = Enum.CameraType.Scriptable;
+        camera.FieldOfView = 80;
 
         let yaw = 0;
         let pitch = 0;

@@ -96,6 +96,7 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
                 if (playerReplicated) {
                     playerReplicated.Destroy();
                 }
+                Events.playerLeft.fire(this.playerId!);
             }
 
             if (event.eT === EventType.PlayerJumping) {

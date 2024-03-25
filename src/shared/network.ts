@@ -3,6 +3,7 @@ import { ServerRequest } from "./replication/server-classes";
 
 interface ClientToServerEvents {
     OnJump: () => void;
+    playerLeft: (playerId: number) => void;
 }
 
 interface ServerToClientEvents {

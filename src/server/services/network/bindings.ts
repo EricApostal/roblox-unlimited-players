@@ -2,6 +2,7 @@ import { Modding, OnStart, Service } from "@flamework/core";
 import { HttpService, Players } from "@rbxts/services";
 import { Event, ServerRequest } from "shared/replication/server-classes";
 import { NetworkService } from "../networking";
+import { Events } from "server/network";
 
 export interface OnServerRequestRecieved {
     onServerRequestRecieved(request: ServerRequest): void;
@@ -67,3 +68,7 @@ class LocalPlayerJoinService implements OnStart {
         }
     }
 }
+
+Events.playerLeft.connect((_, playerId) => {
+    networkPlayers.delete(playerId);
+});

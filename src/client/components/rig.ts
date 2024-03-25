@@ -41,6 +41,8 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
             this.onServerRequestRecieved(request as unknown as ServerRequest);
         });
 
+        (this.instance as Model).PrimaryPart!.Anchored = true;
+
         task.spawn(() => this.replicationTickThead());
     }
 
@@ -72,7 +74,7 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
                     let humanoid = playerReplicated.WaitForChild("Humanoid") as Humanoid;
                     humanoid.AutoRotate = false;
 
-                    this.currentTween = TweenService.Create(playerReplicated.PrimaryPart!, new TweenInfo(0.3, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), goal);
+                    this.currentTween = TweenService.Create(playerReplicated.PrimaryPart!, new TweenInfo(0.2, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), goal);
                     this.currentTween.Play();
 
                     this.moveToLocked = true;
@@ -144,7 +146,7 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
 
         let newCFrame = new CFrame(position).mul(CFrame.Angles(0, math.rad(this.orientation.Y), 0));
         this.currentTween = TweenService.Create(rig.PrimaryPart!, new TweenInfo(0.2, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), { "CFrame": newCFrame });
-        this.currentTween.Play();
+        // this.currentTween.Play();
 
         // let movetoBind: RBXScriptConnection;
         // movetoBind = humanoid.MoveToFinished.Connect((reached: boolean) => {
@@ -177,11 +179,10 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
             while (!(this.instance as Model).PrimaryPart) wait();
 
             // Calculate the goal position using velocity
-            let goalPosition = (this.instance as Model).PrimaryPart!.Position.add(velocity.mul(timeDelta * 2.2));
+            // let goalPosition = (this.instance as Model).PrimaryPart!.Position.add(velocity.mul(timeDelta * 2.2));
+            let goalPosition = this.position;
 
             let humanoid = this.instance.FindFirstChild("Humanoid") as Humanoid;
-            humanoid.WalkSpeed = 16;
-            humanoid.UseJumpPower = true;
 
             if (goalPosition.sub((this.instance as Model).PrimaryPart!.Position).Magnitude > 1) {
                 this.walkTo(goalPosition);

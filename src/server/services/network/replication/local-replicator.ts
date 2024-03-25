@@ -29,10 +29,6 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
         task.spawn(() => {
             this.persistentUpdateThread();
         });
-
-        task.spawn(() => {
-            this.periodicUpdateThread();
-        });
     }
 
     onNetworkPlayerJoined(playerId: number): void {
@@ -78,18 +74,21 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
 
                 let newVelocity = this.getVelocity();
                 let newOrientation = { x: math.round(char.PrimaryPart!.Orientation.X * precision) / precision, y: math.round(char.PrimaryPart!.Orientation.Y * precision) / precision, z: math.round(char.PrimaryPart!.Orientation.Z * precision) / precision };
+                let newPosition = { x: math.round(char.PrimaryPart!.Position.X * precision) / precision, y: math.round(char.PrimaryPart!.Position.Y * precision) / precision, z: math.round(char.PrimaryPart!.Position.Z * precision) / precision };
 
                 let velocityMag = new Vector3(newVelocity.x, newVelocity.y, newVelocity.z).sub(this.lastVelocityUpdate).Magnitude;
                 let orientationMag = new Vector3(newOrientation.x, newOrientation.y, newOrientation.z).sub(this.lastOrientationUpdate).Magnitude;
+                let positionMag = new Vector3(newPosition.x, newPosition.y, newPosition.z).sub(this.lastVelocityUpdate).Magnitude;
 
-                if (velocityMag < 0.01 && orientationMag < 0.01) {
+                if (positionMag < 0.01 && orientationMag < 0.01) {
                     continue;
                 }
 
                 NetworkService.queueEvent(new Event({
                     v: newVelocity,
                     o: newOrientation,
-                    a: animationType
+                    a: animationType,
+                    p: newPosition
                 }, EventType.PlayerPositionUpdate));
 
                 this.lastVelocityUpdate = new Vector3(newVelocity.x, newVelocity.y, newVelocity.z);
@@ -109,22 +108,6 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
         return { x: math.round(orientation.X * this.numberPrecision) / this.numberPrecision, y: math.round(orientation.Y * this.numberPrecision) / this.numberPrecision, z: math.round(orientation.Z * this.numberPrecision) / this.numberPrecision };
     }
 
-    private periodicUpdateThread() {
-        while (true) {
-            while (Players.GetPlayers().size() === 0) wait();
-            while (!Players.GetPlayers()[0]!.Character) wait();
-            let pos = Players.GetPlayers()[0]!.Character!.PrimaryPart!.Position;
-            let vel = this.getVelocity();
-            let orientation = this.getOrientation();
-
-            NetworkService.queueEvent(new Event({
-                p: { x: pos.X, y: pos.Y, z: pos.Z },
-                v: { x: vel.x, y: vel.y, z: vel.z },
-                o: { x: orientation.x, y: orientation.y, z: orientation.z }
-            }, EventType.PlayerPositionUpdate));
-            wait(1);
-        }
-    }
 
     onLocalPlayerJoined(player: Player): void {
         player.Chatted.Connect((message) => {

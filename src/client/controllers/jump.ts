@@ -10,7 +10,8 @@ export class JumpController implements OnStart {
             let humanoid = (character.WaitForChild("Humanoid") as Humanoid);
 
             humanoid.Jumping.Connect((active: boolean) => {
-                Events.OnJump.fire();
+                if (active)
+                    Events.OnJump.fire();
             });
         });
     }

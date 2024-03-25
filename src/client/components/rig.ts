@@ -32,6 +32,7 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
     lastOrientationUpdate: Vector3 = new Vector3(0, 0, 0);
     position: Vector3 = new Vector3(0, 0, 0);
     moveToLocked: boolean = false;
+    currentTween: Tween | undefined;
 
     onStart(): void {
         this.playerId = this.instance.GetAttribute("playerId") as number;
@@ -71,11 +72,11 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
                     let humanoid = playerReplicated.WaitForChild("Humanoid") as Humanoid;
                     humanoid.AutoRotate = false;
 
-                    let tween = TweenService.Create(playerReplicated.PrimaryPart!, new TweenInfo(0.3, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), goal);
-                    tween.Play();
+                    this.currentTween = TweenService.Create(playerReplicated.PrimaryPart!, new TweenInfo(0.3, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), goal);
+                    this.currentTween.Play();
 
                     this.moveToLocked = true;
-                    tween.Completed.Connect(() => {
+                    this.currentTween.Completed.Connect(() => {
                         // humanoid.AutoRotate = true;
                         humanoid.AutoRotate = false;
                         this.position = newPos;
@@ -103,6 +104,9 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
                 if (playerReplicated) {
                     let humanoid = playerReplicated.WaitForChild("Humanoid") as Humanoid;
                     humanoid.Jump = true;
+                    this.currentTween!.Pause();
+                    wait(1);
+                    this.currentTween!.Play();
                 }
             }
         }

@@ -22,7 +22,7 @@ export class Spinny extends BaseComponent implements OnStart {
 
     private spinThread() {
         while (true) {
-            this.part.CFrame = this.part.CFrame.mul(CFrame.Angles(0, 0.1, 0));
+            this.part.CFrame = this.part.CFrame.mul(CFrame.Angles(0, 0.01, 0));
             wait();
         }
     }
@@ -52,14 +52,6 @@ export class Spinny extends BaseComponent implements OnStart {
             if (newCFrame.Position.sub(rootPart.CFrame.Position).Magnitude < teleportThreshold) {
                 rootPart.CFrame = newCFrame
             }
-
-            // game.Workspace.CurrentCamera!.CameraType = Enum.CameraType.Scriptable;
-
-            // rotate camera with platform
-            // let camera = game.Workspace.CurrentCamera!;
-            // let cameraCFrame = camera.CFrame;
-            // cameraCFrame = new CFrame(cameraCFrame.Position, cameraCFrame.Position.add(platformCframe.LookVector));
-
         }
     }
 }

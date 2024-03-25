@@ -1,8 +1,8 @@
 import { BaseComponent, Component } from "@flamework/components";
 import { OnStart } from "@flamework/core";
-import { Players, Chat, TweenService, RunService } from "@rbxts/services";
+import { Players, Chat, TweenService, RunService, TextService } from "@rbxts/services";
 import { NetworkRecieverService } from "client/controllers/client-reciever";
-import { Events } from "client/network";
+import { Events, Functions } from "client/network";
 import { ChatReplicator } from "client/replication/chat";
 import { Event, EventType, ServerRequest } from "shared/replication/server-classes";
 
@@ -31,7 +31,6 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
     lastVelocityUpdate: Vector3 = new Vector3(0, 0, 0);
     lastOrientationUpdate: Vector3 = new Vector3(0, 0, 0);
     position: Vector3 = new Vector3(0, 0, 0);
-    moveToLocked: boolean = false;
     currentTween: Tween | undefined;
 
     onStart(): void {
@@ -77,12 +76,9 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
                     this.currentTween = TweenService.Create(playerReplicated.PrimaryPart!, new TweenInfo(0.2, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), goal);
                     this.currentTween.Play();
 
-                    this.moveToLocked = true;
                     this.currentTween.Completed.Connect(() => {
                         // humanoid.AutoRotate = true;
-                        humanoid.AutoRotate = false;
                         this.position = newPos;
-                        this.moveToLocked = false;
                     });
                 }
 
@@ -90,8 +86,10 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
             }
 
             if (event.eT === EventType.PlayerChatSend) {
-                ChatReplicator.sendMessage(this.playerId!, event.d as string);
-                Chat.Chat((this.instance as Model).FindFirstChild("Head")! as BasePart, event.d as string);
+                Functions.filterString(event.d as string).andThen((filteredText) => {
+                    ChatReplicator.sendMessage(this.playerId!, filteredText);
+                    Chat.Chat((this.instance as Model).FindFirstChild("Head")! as BasePart, filteredText);
+                });
             }
 
             if (event.eT === EventType.PlayerLeavingUpdate) {
@@ -134,8 +132,6 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
     }
 
     private walkTo(position: Vector3, autoRotate: boolean = true) {
-        if (this.moveToLocked) return;
-
         let rig = this.instance as Model;
         let humanoid = rig.FindFirstChild("Humanoid") as Humanoid;
 
@@ -145,7 +141,7 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
         // humanoid.MoveTo(position);
 
         let newCFrame = new CFrame(position).mul(CFrame.Angles(0, math.rad(this.orientation.Y), 0));
-        this.currentTween = TweenService.Create(rig.PrimaryPart!, new TweenInfo(0.2, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), { "CFrame": newCFrame });
+        this.currentTween = TweenService.Create(rig.PrimaryPart!, new TweenInfo(0.0, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), { "CFrame": newCFrame });
         // this.currentTween.Play();
 
         // let movetoBind: RBXScriptConnection;

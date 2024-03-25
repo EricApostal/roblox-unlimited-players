@@ -106,6 +106,7 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
                     humanoid.Jump = true;
                     this.currentTween!.Pause();
                     while (humanoid.Jump) wait();
+                    wait(0.1);
                     this.currentTween!.Play();
                 }
             }

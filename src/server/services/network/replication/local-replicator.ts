@@ -85,7 +85,7 @@ export class PlayerMovementReplicationService extends BaseComponent implements O
                 }
 
                 NetworkService.queueEvent(new Event({
-                    v: newVelocity,
+                    // v: newVelocity,
                     o: newOrientation,
                     a: animationType,
                     p: newPosition

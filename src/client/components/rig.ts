@@ -77,7 +77,6 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
                     this.currentTween.Play();
 
                     this.currentTween.Completed.Connect(() => {
-                        // humanoid.AutoRotate = true;
                         this.position = newPos;
                     });
                 }
@@ -131,65 +130,20 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
         }
     }
 
-    private walkTo(position: Vector3, autoRotate: boolean = true) {
-        let rig = this.instance as Model;
-        let humanoid = rig.FindFirstChild("Humanoid") as Humanoid;
-
-        this.doAnimation(AnimationType.Running);
-
-        humanoid.AutoRotate = false;
-        // humanoid.MoveTo(position);
-
-        let newCFrame = new CFrame(position).mul(CFrame.Angles(0, math.rad(this.orientation.Y), 0));
-        this.currentTween = TweenService.Create(rig.PrimaryPart!, new TweenInfo(0.0, Enum.EasingStyle.Linear, Enum.EasingDirection.InOut), { "CFrame": newCFrame });
-        // this.currentTween.Play();
-
-        // let movetoBind: RBXScriptConnection;
-        // movetoBind = humanoid.MoveToFinished.Connect((reached: boolean) => {
-        //     if (this.currentAnimationTrack) this.currentAnimationTrack.Stop();
-        //     wait(0.25);
-        //     humanoid.AutoRotate = false;
-        //     let orientationTween = TweenService.Create((this.instance as Model)!.PrimaryPart as BasePart,
-        //         new TweenInfo(0.1, Enum.EasingStyle.Linear,
-        //             Enum.EasingDirection.InOut),
-        //         { "CFrame": new CFrame((this.instance as Model)!.PrimaryPart!.Position).mul(CFrame.Angles(0, this.orientation.Y, 0)) });
-        //     orientationTween.Play();
-
-        //     orientationTween.Completed.Connect(() => {
-        //         humanoid.AutoRotate = autoRotate;
-        //     });
-
-        //     humanoid.AutoRotate = false;
-        //     // (this.instance as Model).PrimaryPart!.Orientation = new Vector3(0, this.orientation.Y, 0);
-        //     humanoid.AutoRotate = autoRotate;
-
-        //     movetoBind.Disconnect();
-        // })
-    }
-
     private replicationTickThead() {
         while (true) {
-            let velocity = this.velocity;
-            let timeDelta = 0.1;
 
             while (!(this.instance as Model).PrimaryPart) wait();
 
-            // Calculate the goal position using velocity
-            // let goalPosition = (this.instance as Model).PrimaryPart!.Position.add(velocity.mul(timeDelta * 2.2));
             let goalPosition = this.position;
 
-            let humanoid = this.instance.FindFirstChild("Humanoid") as Humanoid;
-
             if (goalPosition.sub((this.instance as Model).PrimaryPart!.Position).Magnitude > 1) {
-                this.walkTo(goalPosition);
+                this.doAnimation(AnimationType.Running);
             } else {
-                if (this.currentAnimationTrack) {
-                    this.currentAnimationTrack.Stop();
-                    this.currentAnimationTrack = undefined;
-                }
+                this.stopAnimation();
             }
 
-            wait(timeDelta);
+            wait();
         }
     }
 }

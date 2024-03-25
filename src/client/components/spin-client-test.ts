@@ -1,11 +1,13 @@
 import { BaseComponent, Component } from "@flamework/components";
 import { OnStart } from "@flamework/core";
 import { Players, RunService } from "@rbxts/services";
+import { CameraController } from "client/controllers/camera";
 
 @Component({ tag: "spinny" })
 export class Spinny extends BaseComponent implements OnStart {
     lastCFrame = new CFrame();
     part: BasePart;
+    lerpStep: number = 0.08;
 
     constructor() {
         super();
@@ -22,7 +24,7 @@ export class Spinny extends BaseComponent implements OnStart {
 
     private spinThread() {
         while (true) {
-            this.part.CFrame = this.part.CFrame.mul(CFrame.Angles(0, 0.01, 0));
+            this.part.CFrame = this.part.CFrame.mul(CFrame.Angles(0, this.lerpStep, 0));
             wait();
         }
     }
@@ -37,8 +39,6 @@ export class Spinny extends BaseComponent implements OnStart {
 
         let result = game.Workspace.Raycast(rootPart.Position, new Vector3(0, -15, 0), params);
         if (result && result.Instance === this.instance) {
-            // move player with position / rotation of part
-
             let platformCframe = (this.instance as BasePart).CFrame;
             let Rel = platformCframe.mul(this.lastCFrame.Inverse());
             let teleportThreshold = 10;
@@ -51,7 +51,10 @@ export class Spinny extends BaseComponent implements OnStart {
 
             if (newCFrame.Position.sub(rootPart.CFrame.Position).Magnitude < teleportThreshold) {
                 rootPart.CFrame = newCFrame
+                CameraController.setHorizontalOffset(this.lerpStep);
             }
+        } else {
+            CameraController.setHorizontalOffset(0);
         }
     }
 }

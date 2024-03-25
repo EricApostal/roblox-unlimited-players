@@ -1,8 +1,10 @@
 import { Controller, OnStart } from "@flamework/core";
 import { Players, UserInputService, RunService } from "@rbxts/services";
 
+let horizontalCameraOffset = 0;
+
 @Controller()
-export class CameraController implements OnStart {
+class _CameraController implements OnStart {
     onStart(): void {
         const player = Players.LocalPlayer;
         const camera = game.Workspace.CurrentCamera!;
@@ -29,7 +31,7 @@ export class CameraController implements OnStart {
             UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter;
 
             // Update yaw and pitch based on mouse movement
-            yaw += UserInputService.GetMouseDelta().X / 400;
+            yaw += (UserInputService.GetMouseDelta().X + (horizontalCameraOffset * -200)) / 400;
             pitch -= UserInputService.GetMouseDelta().Y / 400;
 
             // Limit pitch angle
@@ -51,5 +53,11 @@ export class CameraController implements OnStart {
 
         RunService.RenderStepped.Connect(updateCamera);
         UserInputService.MouseBehavior = Enum.MouseBehavior.LockCenter;
+    }
+}
+
+export namespace CameraController {
+    export function setHorizontalOffset(offset: number) {
+        horizontalCameraOffset = offset;
     }
 }

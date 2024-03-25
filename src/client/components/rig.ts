@@ -40,7 +40,7 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
             this.onServerRequestRecieved(request as unknown as ServerRequest);
         });
 
-        (this.instance as Model).PrimaryPart!.Anchored = true;
+        ((this.instance as Model).WaitForChild("HumanoidRootPart")! as BasePart).Anchored = true;
 
         task.spawn(() => this.replicationTickThead());
     }
@@ -63,7 +63,7 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
                 if (orientation) this.orientation = new Vector3(orientation.x, orientation.y, orientation.z);
 
                 if (position) {
-                    let newPos = new Vector3(position.X, position.Y + 0.25, position.Z);
+                    let newPos = new Vector3(position.X, position.Y, position.Z);
                     let newCframe = new CFrame(newPos).mul(CFrame.Angles(0, math.rad(orientation.y), 0));
 
                     let goal = {
@@ -132,8 +132,6 @@ export class ReplicatedRig extends BaseComponent implements OnStart {
 
     private replicationTickThead() {
         while (true) {
-
-            while (!(this.instance as Model).PrimaryPart) wait();
 
             let goalPosition = this.position;
 

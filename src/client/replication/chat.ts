@@ -14,9 +14,12 @@ export namespace ChatReplicator {
     TextChatService.OnIncomingMessage = (textChatMessage) => {
         let channel = textChatMessage.TextChannel;
         if (channel && (channel.Name === "RBXGeneral")) {
-            let senderName = textChatMessage.Text.split(":")[0];
-            if (textChatMessage.Text.split(":").size() === 1) {
-                return undefined;
+            let senderName = textChatMessage.PrefixText.gsub(":", "")[0];
+            if (senderName === Players.LocalPlayer.Name) {
+                let overrideProperties = new Instance("TextChatMessageProperties");
+                overrideProperties.Text = textChatMessage.Text;
+                overrideProperties.PrefixText = textChatMessage.PrefixText;
+                return overrideProperties;
             }
 
             let overrideProperties = new Instance("TextChatMessageProperties");
